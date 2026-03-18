@@ -8,58 +8,575 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK - Make sure these load in correct order -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        /* Error Container Styles */
+        .error-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 20px;
+            z-index: 10000;
+            display: none;
+            border-left: 4px solid #F44336;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .error-container.show {
+            display: block;
+        }
+        
+        .error-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .error-header i {
+            font-size: 24px;
+            color: #F44336;
+        }
+        
+        .error-header h3 {
+            color: #333;
+            margin: 0;
+        }
+        
+        .error-message {
+            color: #666;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .error-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .error-btn.primary {
+            background: #2E7D32;
+            color: white;
+        }
+        
+        .error-btn.primary:hover {
+            background: #1B5E20;
+        }
+        
+        .error-btn.secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .error-btn.secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Loading State */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2E7D32;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <!-- Preloader -->
-    <div class="preloader" id="preloader">
-        <div class="preloader-content">
-            <div class="cash-flow-preloader">
-                <div class="coin-stack">
-                    <div class="coin coin-1"><i class="fas fa-coins"></i></div>
-                    <div class="coin coin-2"><i class="fas fa-coins"></i></div>
-                    <div class="coin coin-3"><i class="fas fa-coins"></i></div>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="preloader-progress"></div>
-                </div>
-                <div class="preloader-text">
-                    <h3>ExpenseTracker</h3>
-                    <p class="loading-text">Loading your dashboard...</p>
-                    <p class="percentage-text" id="percentage">0%</p>
-                </div>
-            </div>
+    <!-- Error Container -->
+    <div id="errorContainer" class="error-container">
+        <div class="error-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Dashboard Failed to Load</h3>
+        </div>
+        <div id="errorMessage" class="error-message"></div>
+        <div class="error-actions">
+            <button class="error-btn primary" onclick="retryLoad()">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+            <button class="error-btn secondary" onclick="goToLogin()">
+                <i class="fas fa-sign-in-alt"></i> Back to Login
+            </button>
         </div>
     </div>
 
-    <!-- Dashboard Container -->
-    <div class="dashboard-container hidden" id="main-content">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-wallet"></i>
-                <span>ExpenseTracker</span>
-            </div>
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+        <div class="loading-spinner"></div>
+        <h2 style="color: white;">Loading Dashboard...</h2>
+        <p style="color: rgba(255,255,255,0.8);" id="loadingStatus">Initializing...</p>
+    </div>
+
+    <!-- Main Dashboard Content (Initially Hidden) -->
+    <div id="dashboardContent" style="display: none;">
+        <!-- Your existing dashboard HTML here -->
+        <div class="dashboard-container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-wallet"></i>
+                    <span>ExpenseTracker</span>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    <a href="dashboard.html" class="active">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="expenses.html">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>Expenses</span>
+                    </a>
+                    <a href="income.html">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Income</span>
+                    </a>
+                    <a href="reports.html">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Reports</span>
+                    </a>
+                    <a href="receipts.html">
+                        <i class="fas fa-receipt"></i>
+                        <span>Receipts</span>
+                    </a>
+                    <a href="settings.html">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+                
+                <div class="sidebar-footer" id="userInfo">
+                    <!-- User info will be populated by JavaScript -->
+                </div>
+            </aside>
             
-            <nav class="sidebar-nav">
-                <a href="dashboard.html" class="active">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="expenses.html">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>Expenses</span>
-                </a>
-                <a href="income.html">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>Income</span>
-                </a>
-                <a href="reports.html">
-                    <i
+            <!-- Main Content -->
+            <main class="main-content">
+                <header class="dashboard-header">
+                    <h1>Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="window.location.href='expenses.html'">
+                            <i class="fas fa-plus"></i> Add Expense
+                        </button>
+                        <button class="btn btn-outline" onclick="window.location.href='income.html'">
+                            <i class="fas fa-plus"></i> Add Income
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card income-card">
+                        <div class="card-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="card-details">
+                            <span class="card-label">Total Income</span>
+                            <span class="card-value" id="totalIncome">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card expense-card">
+                        <div class="card-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="card-details">
+                            <span class="card-label">Total Expenses</span>
+                            <span class="card-value" id="totalExpenses">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card balance-card">
+                        <div class="card-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="card-details">
+                            <span class="card-label">Net Balance</span>
+                            <span class="card-value" id="netBalance">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts -->
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>Income vs Expenses</h3>
+                        <canvas id="incomeExpenseChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Category Breakdown</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Recent Transactions -->
+                <div class="recent-transactions">
+                    <h3>Recent Transactions</h3>
+                    <div id="transactionsList">
+                        <!-- Transactions will be populated here -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+            authDomain: "expense-tracker-aebb1.firebaseapp.com",
+            projectId: "expense-tracker-aebb1",
+            storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+            messagingSenderId: "220896439984",
+            appId: "1:220896439984:web:645c8656c3ba1d39991575"
+        };
+
+        // Global variables
+        let auth, db;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+
+        async function initializeDashboard() {
+            try {
+                updateLoadingStatus('Initializing Firebase...');
+                
+                // Initialize Firebase
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                updateLoadingStatus('Checking authentication...');
+                
+                // Check authentication
+                const user = await checkAuth();
+                
+                if (!user) {
+                    showError('No user logged in. Please login again.');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                    return;
+                }
+                
+                updateLoadingStatus(`Welcome, ${user.displayName || user.email}!`);
+                
+                // Load dashboard data
+                await loadDashboardData(user.uid);
+                
+                // Hide loading, show dashboard
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+                
+                // Initialize charts
+                initializeCharts();
+                
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                handleError(error);
+            }
+        }
+
+        function checkAuth() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(user => {
+                    unsubscribe();
+                    resolve(user);
+                }, reject);
+            });
+        }
+
+        async function loadDashboardData(userId) {
+            updateLoadingStatus('Loading your transactions...');
+            
+            try {
+                // Get current month date range
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                
+                // Load expenses
+                const expensesSnapshot = await db.collection('expenses')
+                    .where('userId', '==', userId)
+                    .where('date', '>=', startOfMonth)
+                    .where('date', '<=', endOfMonth)
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                let totalExpenses = 0;
+                const expenses = [];
+                expensesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalExpenses += data.amount;
+                    expenses.push({ id: doc.id, ...data });
+                });
+                
+                // Load income
+                const incomeSnapshot = await db.collection('income')
+                    .where('userId', '==', userId)
+                    .where('date', '>=', startOfMonth)
+                    .where('date', '<=', endOfMonth)
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                let totalIncome = 0;
+                const income = [];
+                incomeSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalIncome += data.amount;
+                    income.push({ id: doc.id, ...data });
+                });
+                
+                // Update UI with totals
+                document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+                document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+                document.getElementById('netBalance').textContent = formatCurrency(totalIncome - totalExpenses);
+                
+                // Load recent transactions
+                displayRecentTransactions([...expenses, ...income]);
+                
+                // Store data for charts
+                window.chartData = {
+                    expenses,
+                    income,
+                    totalExpenses,
+                    totalIncome
+                };
+                
+                // Load user info
+                const user = auth.currentUser;
+                updateUserInfo(user);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                throw error;
+            }
+        }
+
+        function displayRecentTransactions(transactions) {
+            const container = document.getElementById('transactionsList');
+            
+            if (!transactions.length) {
+                container.innerHTML = '<p class="no-transactions">No transactions this month</p>';
+                return;
+            }
+            
+            // Sort by date and take latest 5
+            const recent = transactions
+                .sort((a, b) => b.date.toDate() - a.date.toDate())
+                .slice(0, 5);
+            
+            container.innerHTML = recent.map(t => `
+                <div class="transaction-item ${t.amount ? 'expense' : 'income'}">
+                    <div class="transaction-icon">
+                        <i class="fas ${t.amount ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <span class="transaction-desc">${t.description || 'No description'}</span>
+                        <span class="transaction-date">${formatDate(t.date)}</span>
+                    </div>
+                    <span class="transaction-amount ${t.amount ? 'expense-amount' : 'income-amount'}">
+                        ${formatCurrency(t.amount || t.amount)}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function updateUserInfo(user) {
+            const sidebarFooter = document.querySelector('.sidebar-footer');
+            if (sidebarFooter && user) {
+                sidebarFooter.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">${user.displayName || 'User'}</span>
+                            <span class="user-email">${user.email}</span>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                `;
+            }
+        }
+
+        function initializeCharts() {
+            if (!window.chartData) return;
+            
+            // Income vs Expense Chart
+            const ctx1 = document.getElementById('incomeExpenseChart')?.getContext('2d');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Income', 'Expenses'],
+                        datasets: [{
+                            label: 'Amount',
+                            data: [window.chartData.totalIncome, window.chartData.totalExpenses],
+                            backgroundColor: ['#4CAF50', '#F44336']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+            
+            // Category Chart
+            const ctx2 = document.getElementById('categoryChart')?.getContext('2d');
+            if (ctx2 && window.chartData.expenses.length) {
+                // Group expenses by category
+                const categories = {};
+                window.chartData.expenses.forEach(expense => {
+                    categories[expense.category] = (categories[expense.category] || 0) + expense.amount;
+                });
+                
+                new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(categories),
+                        datasets: [{
+                            data: Object.values(categories),
+                            backgroundColor: [
+                                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                                '#FFE194', '#E6B89C', '#A2D9CE', '#81C784'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+
+        // Helper Functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount || 0);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function updateLoadingStatus(status) {
+            document.getElementById('loadingStatus').textContent = status;
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorContainer').classList.add('show');
+            document.getElementById('loadingState').style.display = 'none';
+        }
+
+        function handleError(error) {
+            let message = 'An unknown error occurred';
+            
+            if (error.code === 'permission-denied') {
+                message = 'Permission denied. Please check Firebase security rules.';
+            } else if (error.code === 'unavailable') {
+                message = 'Firebase service unavailable. Check your internet connection.';
+            } else if (error.message) {
+                message = error.message;
+            }
+            
+            showError(message);
+        }
+
+        function retryLoad() {
+            document.getElementById('errorContainer').classList.remove('show');
+            document.getElementById('loadingState').style.display = 'flex';
+            retryCount++;
+            
+            if (retryCount <= maxRetries) {
+                initializeDashboard();
+            } else {
+                showError('Maximum retry attempts reached. Please login again.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        }
+
+        function goToLogin() {
+            window.location.href = 'login.html';
+        }
+
+        async function logout() {
+            try {
+                await auth.signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
