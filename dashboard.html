@@ -1176,4 +1176,200 @@
                 container.innerHTML = `
                     <div class="no-transactions">
                         <i class="fas fa-receipt"></i>
-                        <p>No transactions this month
+                        <p>No transactions this month</p>
+                        <button class="btn btn-primary" onclick="window.location.href='expenses.html'">
+                            <i class="fas fa-plus"></i> Add First Transaction
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const recent = transactions
+                .sort((a, b) => b.date.toDate() - a.date.toDate())
+                .slice(0, 5);
+            
+            container.innerHTML = recent.map(t => {
+                const type = t.amount ? 'expense' : 'income';
+                return `
+                    <div class="transaction-item ${type}" onclick="viewTransaction('${t.id}')">
+                        <div class="transaction-icon">
+                            <i class="fas ${t.amount ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <span class="transaction-desc">${t.description || 'No description'}</span>
+                            <span class="transaction-date">
+                                <i class="far fa-calendar-alt"></i> 
+                                ${formatDate(t.date)}
+                            </span>
+                        </div>
+                        <div class="transaction-amount ${t.amount ? 'expense-amount' : 'income-amount'}">
+                            ${formatCurrency(t.amount || t.amount)}
+                            ${t.receiptUrl ? '<i class="fas fa-image receipt-indicator" title="Has receipt"></i>' : ''}
+                            ${t.itemImageUrl ? '<i class="fas fa-camera receipt-indicator" title="Has item image"></i>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateUserInfo(user) {
+            const userInfoDiv = document.getElementById('userInfo');
+            if (userInfoDiv && user) {
+                userInfoDiv.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">${user.displayName || 'User'}</span>
+                            <span class="user-email">${user.email}</span>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                `;
+            }
+        }
+
+        function initializeCharts() {
+            if (!window.chartData) return;
+            
+            // Income vs Expense Chart
+            const ctx1 = document.getElementById('incomeExpenseChart')?.getContext('2d');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Income', 'Expenses'],
+                        datasets: [{
+                            label: 'Amount ($)',
+                            data: [window.chartData.totalIncome, window.chartData.totalExpenses],
+                            backgroundColor: ['#00C853', '#FF3D00'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+            
+            // Category Chart
+            const ctx2 = document.getElementById('categoryChart')?.getContext('2d');
+            if (ctx2 && window.chartData.expenses.length) {
+                const categories = {};
+                window.chartData.expenses.forEach(expense => {
+                    categories[expense.category] = (categories[expense.category] || 0) + expense.amount;
+                });
+                
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(categories),
+                        datasets: [{
+                            data: Object.values(categories),
+                            backgroundColor: [
+                                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                                '#FFE194', '#E6B89C', '#A2D9CE', '#81C784'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Helper Functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount || 0);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function updateLoadingStatus(status) {
+            const statusEl = document.getElementById('loadingStatus');
+            if (statusEl) statusEl.textContent = status;
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            const errorContainer = document.getElementById('errorContainer');
+            const loadingState = document.getElementById('loadingState');
+            
+            if (errorEl) errorEl.textContent = message;
+            if (errorContainer) errorContainer.classList.add('show');
+            if (loadingState) loadingState.style.display = 'none';
+        }
+
+        function handleError(error) {
+            let message = 'An unknown error occurred';
+            
+            if (error.code === 'permission-denied') {
+                message = 'Permission denied. Please check Firebase security rules.';
+            } else if (error.code === 'unavailable') {
+                message = 'Firebase service unavailable. Check your internet connection.';
+            } else if (error.message) {
+                message = error.message;
+            }
+            
+            showError(message);
+        }
+
+        function retryLoad() {
+            const errorContainer = document.getElementById('errorContainer');
+            const loadingState = document.getElementById('loadingState');
+            
+            errorContainer.classList.remove('show');
+            loadingState.style.display = 'flex';
+            retryCount++;
+            
+            if (retryCount <= maxRetries) {
+                initializeDashboard();
+            } else {
+                showError('Maximum retry attempts reached. Please login again.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        }
+
+        function goToLogin() {
+            window.location.href = 'login.html';
+        }
+
+        async function logout() {
+            try {
+                await auth.signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function viewTransaction(id) {
+            console.log('View transaction:', id);
+            // Implement transaction view modal or navigation
+        }
+    </script>
+</body>
+</html>
