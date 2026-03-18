@@ -1,12 +1,12 @@
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID",
-    measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+  authDomain: "expense-tracker-aebb1.firebaseapp.com",
+  projectId: "expense-tracker-aebb1",
+  storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+  messagingSenderId: "220896439984",
+  appId: "1:220896439984:web:645c8656c3ba1d39991575",
+  measurementId: "G-82GS854XPS"
 };
 
 // Initialize Firebase
