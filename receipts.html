@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipts - ExpenseTracker</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/receipts.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-wallet"></i>
+            <span>ExpenseTracker</span>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="expenses.html">Expenses</a>
+            <a href="income.html">Income</a>
+            <a href="reports.html">Reports</a>
+            <a href="receipts.html" class="active">Receipts</a>
+        </div>
+        <div class="nav-user" id="navUser"></div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="receipts-container">
+        <div class="receipts-header">
+            <div>
+                <h1><i class="fas fa-receipt"></i> Receipt Gallery</h1>
+                <p>All your receipts and item images in one place</p>
+            </div>
+            <button class="btn btn-primary" onclick="window.location.href='add-expense.html'">
+                <i class="fas fa-plus"></i> Add New Receipt
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="receipts-filters">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search receipts..." onkeyup="filterReceipts()">
+            </div>
+            <select id="filterType" onchange="filterReceipts()">
+                <option value="all">All Images</option>
+                <option value="receipts">Receipts Only</option>
+                <option value="items">Item Images Only</option>
+            </select>
+            <select id="sortBy" onchange="sortReceipts()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="amount">Highest Amount</option>
+            </select>
+        </div>
+
+        <!-- Receipts Grid -->
+        <div class="receipts-grid" id="receiptsGrid">
+            <!-- Receipts will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="close-lightbox">&times;</span>
+        <div class="lightbox-content">
+            <img id="lightboxImage" src="" alt="Receipt">
+            <div class="lightbox-info" id="lightboxInfo"></div>
+        </div>
+        <button class="lightbox-prev" onclick="navigateLightbox(-1)">&#10094;</button>
+        <button class="lightbox-next" onclick="navigateLightbox(1)">&#10095;</button>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/receipts.js"></script>
+</body>
+</html>
