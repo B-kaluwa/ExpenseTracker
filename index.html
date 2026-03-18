@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseTracker | Prince Kaluwa</title>
+    
+    <!-- Favicon / Icon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-content">
+            <div class="cash-flow-preloader">
+                <div class="coin-stack">
+                    <div class="coin coin-1"><i class="fas fa-coins"></i></div>
+                    <div class="coin coin-2"><i class="fas fa-coins"></i></div>
+                    <div class="coin coin-3"><i class="fas fa-coins"></i></div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="preloader-progress"></div>
+                </div>
+                <div class="preloader-text">
+                    <h3>ExpenseTracker</h3>
+                    <p class="loading-text">Loading your finances...</p>
+                    <p class="percentage-text" id="percentage">0%</p>
+                </div>
+                <div class="cash-flow-animation">
+                    <span class="cash-flow-up"><i class="fas fa-arrow-up"></i> Income</span>
+                    <span class="cash-flow-down"><i class="fas fa-arrow-down"></i> Expenses</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="landing-container hidden" id="main-content">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-wallet"></i>
+                <span>ExpenseTracker</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="window.location.href='login.html'">Login</button>
+                <button class="btn btn-primary" onclick="window.location.href='signup.html'">Sign Up</button>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Track Your <span class="highlight">Expenses</span> Like a Pro</h1>
+                <p>Smart expense tracking with receipt management and insightful analytics</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-large" onclick="window.location.href='signup.html'">
+                        <i class="fas fa-rocket"></i> Get Started Free
+                    </button>
+                    <button class="btn btn-outline btn-large" onclick="window.location.href='#demo'">
+                        <i class="fas fa-play"></i> Watch Demo
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Active Users</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">50K+</span>
+                        <span class="stat-label">Receipts Scanned</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">4.8★</span>
+                        <span class="stat-label">User Rating</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="assets/images/dashboard-preview.svg" alt="Dashboard Preview">
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <h2>Why Choose ExpenseTracker?</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-camera"></i>
+                    <h3>Receipt Scanning</h3>
+                    <p>Upload receipt images and extract data automatically</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Insightful Analytics</h3>
+                    <p>Visualize your spending with interactive charts</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Secure & Private</h3>
+                    <p>Your financial data is encrypted and protected</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/preloader.js"></script>
+</body>
+</html>
