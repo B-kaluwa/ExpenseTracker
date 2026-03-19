@@ -7,14 +7,479 @@
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/forms.css">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        /* Form Styles */
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --primary-gradient: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --secondary: #1976D2;
+            --income: #00C853;
+            --expense: #FF3D00;
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --text-muted: #95A5A6;
+            --border-color: #E0E0E0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s ease;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-brand i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--expense);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-logout:hover {
+            transform: scale(1.1);
+        }
+
+        /* Form Container */
+        .form-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .form-header h1 i {
+            color: var(--expense);
+            margin-right: 10px;
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+        }
+
+        /* Form Card */
+        .form-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group label i {
+            color: var(--expense);
+            margin-right: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            font-family: var(--font-family);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--expense);
+            box-shadow: 0 0 0 3px rgba(255, 61, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group-text {
+            padding: 12px 15px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-right: none;
+            border-radius: var(--radius-md) 0 0 var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 600;
+            min-width: 60px;
+        }
+
+        .input-group input {
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        /* Form Row */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* File Upload */
+        .file-upload-container {
+            position: relative;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            text-align: center;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-upload-container:hover,
+        .file-upload-container.dragover {
+            border-color: var(--expense);
+            background: rgba(255, 61, 0, 0.05);
+        }
+
+        .file-upload-container input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload-placeholder i {
+            font-size: 2rem;
+            color: var(--expense);
+            margin-bottom: 10px;
+        }
+
+        .file-upload-placeholder p {
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .file-upload-placeholder small {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .file-preview {
+            position: relative;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .file-preview img {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-md);
+        }
+
+        .remove-file {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--expense);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+            flex: 1;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-loader {
+            display: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Success Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            max-width: 400px;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--income);
+            margin-bottom: 20px;
+        }
+
+        .modal-content h2 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--income);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--expense);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-card {
+                padding: 30px 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -28,38 +493,42 @@
             <a href="expenses.html">Expenses</a>
             <a href="income.html">Income</a>
             <a href="reports.html">Reports</a>
+            <a href="receipts.html">Receipts</a>
+            <a href="settings.html">Settings</a>
         </div>
-        <div class="nav-user" id="navUser">
-            <!-- User info will be loaded here -->
-        </div>
+        <div class="nav-user" id="navUser"></div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- Form Container -->
     <div class="form-container">
         <div class="form-header">
-            <h1><i class="fas fa-plus-circle"></i> Add New Expense</h1>
-            <p>Enter your expense details below</p>
+            <h1><i class="fas fa-plus-circle"></i> Add Expense</h1>
+            <p>Record your expense details below</p>
         </div>
 
-        <form id="expenseForm" class="expense-form" onsubmit="handleExpenseSubmit(event)">
-            <!-- Amount -->
-            <div class="form-section">
-                <h3>Amount</h3>
+        <div class="form-card">
+            <form id="expenseForm" onsubmit="handleExpenseSubmit(event)">
+                <!-- Amount -->
                 <div class="form-group">
-                    <label for="amount">Amount *</label>
+                    <label for="amount">
+                        <i class="fas fa-dollar-sign"></i>
+                        Amount (MK) *
+                    </label>
                     <div class="input-group">
                         <span class="input-group-text">MK</span>
                         <input type="number" id="amount" name="amount" required 
-                               step="0.01" min="0.01" placeholder="0.00">
+                               step="1" min="1" placeholder="Enter amount in Kwacha"
+                               oninput="validateAmount(this)">
                     </div>
+                    <small style="color: var(--text-muted);">Enter whole numbers only (no decimals)</small>
                 </div>
-            </div>
 
-            <!-- Category -->
-            <div class="form-section">
-                <h3>Category</h3>
+                <!-- Category -->
                 <div class="form-group">
-                    <label for="category">Category *</label>
+                    <label for="category">
+                        <i class="fas fa-tag"></i>
+                        Category *
+                    </label>
                     <select id="category" name="category" required>
                         <option value="">Select a category</option>
                         <option value="Food & Dining">🍔 Food & Dining</option>
@@ -71,44 +540,42 @@
                         <option value="Education">📚 Education</option>
                         <option value="Travel">✈️ Travel</option>
                         <option value="Personal Care">💇 Personal Care</option>
-                        <option value="Gifts & Donations">🎁 Gifts & Donations</option>
                         <option value="Other">📦 Other</option>
                     </select>
                 </div>
-            </div>
 
-            <!-- Date -->
-            <div class="form-section">
-                <h3>Date</h3>
+                <!-- Date -->
                 <div class="form-group">
-                    <label for="date">Date *</label>
+                    <label for="date">
+                        <i class="fas fa-calendar"></i>
+                        Date *
+                    </label>
                     <input type="date" id="date" name="date" required>
                 </div>
-            </div>
 
-            <!-- Description -->
-            <div class="form-section">
-                <h3>Description</h3>
+                <!-- Description -->
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="3" 
-                              placeholder="Enter a description (optional)"></textarea>
+                    <label for="description">
+                        <i class="fas fa-align-left"></i>
+                        Description
+                    </label>
+                    <textarea id="description" name="description" rows="2" 
+                              placeholder="What was this expense for?"></textarea>
                 </div>
-            </div>
 
-            <!-- Receipt Image -->
-            <div class="form-section">
-                <h3>Receipt Image</h3>
+                <!-- Receipt Image -->
                 <div class="form-group">
-                    <label for="receiptImage">Upload Receipt (Optional)</label>
+                    <label for="receiptImage">
+                        <i class="fas fa-image"></i>
+                        Receipt Image (Optional)
+                    </label>
                     <div class="file-upload-container" id="receiptUploadContainer">
                         <input type="file" id="receiptImage" name="receiptImage" 
                                accept="image/*" onchange="previewReceipt(this)">
                         <div class="file-upload-placeholder" id="receiptPlaceholder">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <p>Click to upload receipt</p>
-                            <span>or drag and drop</span>
-                            <small>PNG, JPG, GIF up to 10MB</small>
+                            <small>PNG, JPG up to 5MB</small>
                         </div>
                         <div class="file-preview hidden" id="receiptPreview">
                             <img src="" alt="Receipt preview">
@@ -118,89 +585,45 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Item Image -->
-            <div class="form-section">
-                <h3>Item Image</h3>
+                <!-- Payment Method -->
                 <div class="form-group">
-                    <label for="itemImage">Upload Item Photo (Optional)</label>
-                    <div class="file-upload-container" id="itemUploadContainer">
-                        <input type="file" id="itemImage" name="itemImage" 
-                               accept="image/*" onchange="previewItem(this)">
-                        <div class="file-upload-placeholder" id="itemPlaceholder">
-                            <i class="fas fa-camera"></i>
-                            <p>Click to upload item photo</p>
-                            <span>or drag and drop</span>
-                            <small>PNG, JPG, GIF up to 10MB</small>
-                        </div>
-                        <div class="file-preview hidden" id="itemPreview">
-                            <img src="" alt="Item preview">
-                            <button type="button" class="remove-file" onclick="removeItem()">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Payment Method -->
-            <div class="form-section">
-                <h3>Payment Method</h3>
-                <div class="form-group">
-                    <label for="paymentMethod">Payment Method</label>
+                    <label for="paymentMethod">
+                        <i class="fas fa-credit-card"></i>
+                        Payment Method
+                    </label>
                     <select id="paymentMethod" name="paymentMethod">
                         <option value="Cash">💵 Cash</option>
+                        <option value="Mobile Money">📱 Mobile Money (Airtel Money/TNM Mpamba)</option>
+                        <option value="Bank Transfer">🏦 Bank Transfer</option>
                         <option value="Credit Card">💳 Credit Card</option>
                         <option value="Debit Card">💳 Debit Card</option>
-                        <option value="Bank Transfer">🏦 Bank Transfer</option>
-                        <option value="Mobile Payment">📱 Mobile Payment</option>
                         <option value="Other">📦 Other</option>
                     </select>
                 </div>
-            </div>
 
-            <!-- Tags -->
-            <div class="form-section">
-                <h3>Tags</h3>
+                <!-- Notes -->
                 <div class="form-group">
-                    <label for="tags">Tags (comma separated)</label>
-                    <input type="text" id="tags" name="tags" 
-                           placeholder="e.g., business, tax-deductible, work">
-                </div>
-            </div>
-
-            <!-- Location -->
-            <div class="form-section">
-                <h3>Location</h3>
-                <div class="form-group">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" name="location" 
-                           placeholder="Where did you make this purchase?">
-                </div>
-            </div>
-
-            <!-- Notes -->
-            <div class="form-section">
-                <h3>Notes</h3>
-                <div class="form-group">
-                    <label for="notes">Additional Notes</label>
+                    <label for="notes">
+                        <i class="fas fa-sticky-note"></i>
+                        Additional Notes
+                    </label>
                     <textarea id="notes" name="notes" rows="2" 
                               placeholder="Any additional notes..."></textarea>
                 </div>
-            </div>
 
-            <!-- Form Actions -->
-            <div class="form-actions">
-                <button type="button" class="btn btn-outline" onclick="window.location.href='expenses.html'">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span class="btn-text"><i class="fas fa-save"></i> Save Expense</span>
-                    <span class="btn-loader hidden"><i class="fas fa-spinner fa-spin"></i> Saving...</span>
-                </button>
-            </div>
-        </form>
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="window.location.href='expenses.html'">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="btn-text"><i class="fas fa-save"></i> Save Expense</span>
+                        <span class="btn-loader"><i class="fas fa-spinner fa-spin"></i> Saving...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Success Modal -->
@@ -208,72 +631,325 @@
         <div class="modal-content">
             <i class="fas fa-check-circle success-icon"></i>
             <h2>Expense Added!</h2>
-            <p>Your expense has been successfully recorded.</p>
+            <p id="successMessage">Your expense has been successfully recorded.</p>
             <div class="modal-actions">
-                <button class="btn btn-primary" onclick="window.location.href='expenses.html'">
+                <button class="btn btn-primary" onclick="goToExpenses()">
                     View All Expenses
                 </button>
-                <button class="btn btn-outline" onclick="addAnotherExpense()">
+                <button class="btn btn-outline" onclick="addAnother()">
                     Add Another
                 </button>
             </div>
         </div>
     </div>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/expenses.js"></script>
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
     <script>
+        // Firebase Configuration (make sure this matches your config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+            authDomain: "expense-tracker-aebb1.firebaseapp.com",
+            projectId: "expense-tracker-aebb1",
+            storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+            messagingSenderId: "220896439984",
+            appId: "1:220896439984:web:645c8656c3ba1d39991575"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Global variables
+        let currentUser = null;
+        let selectedReceiptFile = null;
+
         // Set default date to today
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('date').value = today;
             
             // Check authentication
-            checkAuthAndRedirect();
+            checkAuth();
         });
 
-        function checkAuthAndRedirect() {
-            firebase.auth().onAuthStateChanged((user) => {
-                if (!user) {
-                    window.location.href = 'login.html';
+        // Check authentication
+        function checkAuth() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    updateUserInfo(user);
                 } else {
-                    // Load user info in navbar
-                    document.getElementById('navUser').innerHTML = `
-                        <div class="user-dropdown">
-                            <span>${user.displayName || user.email}</span>
-                            <button onclick="logout()" class="btn-logout">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </button>
-                        </div>
-                    `;
+                    window.location.href = 'login.html';
                 }
             });
         }
 
+        // Update user info in navbar
+        function updateUserInfo(user) {
+            const navUser = document.getElementById('navUser');
+            if (navUser && user) {
+                navUser.innerHTML = `
+                    <div class="user-dropdown">
+                        <span>${user.displayName || user.email}</span>
+                        <button onclick="logout()" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Logout
         async function logout() {
             try {
-                await firebase.auth().signOut();
+                await auth.signOut();
                 window.location.href = 'login.html';
             } catch (error) {
                 console.error('Logout error:', error);
             }
         }
 
-        function addAnotherExpense() {
-            document.getElementById('successModal').style.display = 'none';
+        // Validate amount (must be whole number)
+        function validateAmount(input) {
+            // Remove any decimals
+            if (input.value.includes('.')) {
+                input.value = Math.round(parseFloat(input.value));
+            }
+        }
+
+        // Handle expense submission
+        async function handleExpenseSubmit(event) {
+            event.preventDefault();
+            
+            // Check authentication
+            if (!currentUser) {
+                showNotification('You must be logged in', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnLoader = submitBtn.querySelector('.btn-loader');
+            
+            // Show loading state
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline-block';
+            submitBtn.disabled = true;
+            
+            try {
+                // Get form values
+                const amountInput = document.getElementById('amount');
+                const amount = Math.round(parseFloat(amountInput.value)); // Ensure whole number
+                const category = document.getElementById('category').value;
+                const date = new Date(document.getElementById('date').value);
+                const description = document.getElementById('description').value;
+                const paymentMethod = document.getElementById('paymentMethod').value;
+                const notes = document.getElementById('notes').value;
+                
+                // Debug logs
+                console.log('Form values:', {
+                    amount,
+                    category,
+                    date,
+                    description,
+                    paymentMethod,
+                    notes
+                });
+                
+                // Validate
+                if (isNaN(amount) || amount < 1) {
+                    throw new Error('Please enter a valid amount (minimum MK 1)');
+                }
+                
+                if (!category) {
+                    throw new Error('Please select a category');
+                }
+                
+                // Prepare expense data
+                const expenseData = {
+                    userId: currentUser.uid,
+                    amount: amount, // This is now a whole number
+                    category: category,
+                    date: date,
+                    description: description || '',
+                    paymentMethod: paymentMethod || 'Cash',
+                    notes: notes || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                console.log('Saving expense data:', expenseData);
+                
+                // Upload receipt if selected
+                if (selectedReceiptFile) {
+                    try {
+                        const receiptUrl = await uploadReceipt(selectedReceiptFile);
+                        expenseData.receiptUrl = receiptUrl;
+                    } catch (uploadError) {
+                        console.error('Receipt upload failed:', uploadError);
+                        // Continue even if receipt upload fails
+                        showNotification('Expense saved but receipt upload failed', 'warning');
+                    }
+                }
+                
+                // Save to Firestore
+                const docRef = await db.collection('expenses').add(expenseData);
+                console.log('Expense saved successfully with ID:', docRef.id);
+                
+                // Show success message
+                const successMessage = `Expense of MK ${amount.toLocaleString()} added successfully!`;
+                document.getElementById('successMessage').textContent = successMessage;
+                document.getElementById('successModal').classList.add('active');
+                
+            } catch (error) {
+                console.error('Error saving expense:', error);
+                
+                // Detailed error message
+                let errorMessage = error.message || 'Failed to save expense';
+                
+                if (error.code === 'permission-denied') {
+                    errorMessage = 'Permission denied. Please check Firebase rules.';
+                } else if (error.code === 'unavailable') {
+                    errorMessage = 'Network error. Please check your connection.';
+                } else if (error.code === 'invalid-argument') {
+                    errorMessage = 'Invalid data. Please check your input.';
+                }
+                
+                showNotification(errorMessage, 'error');
+                
+            } finally {
+                // Hide loading state
+                btnText.style.display = 'inline-block';
+                btnLoader.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Upload receipt to Firebase Storage
+        async function uploadReceipt(file) {
+            if (!file || !currentUser) return null;
+            
+            const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+            const storageRef = storage.ref();
+            const receiptRef = storageRef.child(`users/${currentUser.uid}/receipts/${fileName}`);
+            
+            // Upload with progress monitoring
+            const uploadTask = receiptRef.put(file);
+            
+            return new Promise((resolve, reject) => {
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                        // Progress
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('Upload progress:', progress);
+                    },
+                    (error) => {
+                        // Error
+                        console.error('Upload error:', error);
+                        reject(error);
+                    },
+                    async () => {
+                        // Complete
+                        const downloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+                        resolve(downloadUrl);
+                    }
+                );
+            });
+        }
+
+        // Preview receipt
+        function previewReceipt(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('Please select an image file', 'error');
+                input.value = '';
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('File size must be less than 5MB', 'error');
+                input.value = '';
+                return;
+            }
+            
+            selectedReceiptFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('receiptPreview').querySelector('img').src = e.target.result;
+                document.getElementById('receiptPlaceholder').classList.add('hidden');
+                document.getElementById('receiptPreview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Remove receipt
+        function removeReceipt() {
+            selectedReceiptFile = null;
+            document.getElementById('receiptImage').value = '';
+            document.getElementById('receiptPreview').classList.add('hidden');
+            document.getElementById('receiptPlaceholder').classList.remove('hidden');
+        }
+
+        // Go to expenses page
+        function goToExpenses() {
+            window.location.href = 'expenses.html';
+        }
+
+        // Add another expense
+        function addAnother() {
+            document.getElementById('successModal').classList.remove('active');
             document.getElementById('expenseForm').reset();
             
-            // Reset file uploads
+            // Reset file upload
             removeReceipt();
-            removeItem();
             
             // Set date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('date').value = today;
-
-            
         }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                 type === 'error' ? 'fa-exclamation-circle' : 
+                                 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Make functions globally available
+        window.handleExpenseSubmit = handleExpenseSubmit;
+        window.previewReceipt = previewReceipt;
+        window.removeReceipt = removeReceipt;
+        window.validateAmount = validateAmount;
+        window.goToExpenses = goToExpenses;
+        window.addAnother = addAnother;
+        window.logout = logout;
     </script>
 </body>
 </html>
