@@ -419,12 +419,23 @@ function exportExpenses() {
 }
 
 // Helper: Format currency
+
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(amount || 0);
+    const wholeAmount = Math.round(amount || 0);
+    return `MK ${wholeAmount.toLocaleString('en-MW')}`;
 }
+
+// Also update any hardcoded '$' symbols in the HTML generation
+// Look for lines like: `$${expense.amount.toFixed(2)}`
+// Replace with: `${formatCurrency(expense.amount)}`
+
+// Example fix in displayExpenses function:
+// Change this:
+`$${expense.amount.toFixed(2)}`
+
+// To this:
+`${formatCurrency(expense.amount)}`
+
 
 // Helper: Format date
 function formatDate(timestamp, format = 'short') {
