@@ -460,13 +460,15 @@ function exportIncome() {
     showNotification('Income exported successfully', 'success');
 }
 
-// Helper: Format currency
+// Helper:the formatCurrency function:
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(amount || 0);
+    const wholeAmount = Math.round(amount || 0);
+    return `MK ${wholeAmount.toLocaleString('en-MW')}`;
 }
+
+// Update any hardcoded '$' symbols
+// Look for: `$${income.amount.toFixed(2)}`
+// Replace with: `${formatCurrency(income.amount)}`
 
 // Helper: Format date
 function formatDate(timestamp, format = 'short') {
