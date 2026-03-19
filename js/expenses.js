@@ -1,9 +1,11 @@
-// expenses.js - Complete expense management functionality
+// expenses.js - Complete expenses management
 
-// Global variables
 let currentUser = null;
-let selectedReceiptFile = null;
-let selectedItemFile = null;
+let allExpenses = [];
+let filteredExpenses = [];
+let currentPage = 1;
+let itemsPerPage = 20;
+let currentExpenseId = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,312 +18,50 @@ function checkAuth() {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
-            loadCategories();
+            loadExpenses();
+            updateUserInfo(user);
         } else {
             window.location.href = 'login.html';
         }
     });
 }
 
+// Update user info in navbar
+function updateUserInfo(user) {
+    const navUser = document.getElementById('navUser');
+    if (navUser && user) {
+        navUser.innerHTML = `
+            <div class="user-dropdown">
+                <span>${user.displayName || user.email}</span>
+                <button onclick="logout()" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Logout
+async function logout() {
+    try {
+        await firebase.auth().signOut();
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
+
 // Setup event listeners
 function setupEventListeners() {
-    // Drag and drop for receipt upload
-    const receiptContainer = document.getElementById('receiptUploadContainer');
-    if (receiptContainer) {
-        receiptContainer.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            receiptContainer.classList.add('dragover');
-        });
-
-        receiptContainer.addEventListener('dragleave', () => {
-            receiptContainer.classList.remove('dragover');
-        });
-
-        receiptContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            receiptContainer.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleReceiptFile(files[0]);
-            }
-        });
-    }
-
-    // Drag and drop for item upload
-    const itemContainer = document.getElementById('itemUploadContainer');
-    if (itemContainer) {
-        itemContainer.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            itemContainer.classList.add('dragover');
-        });
-
-        itemContainer.addEventListener('dragleave', () => {
-            itemContainer.classList.remove('dragover');
-        });
-
-        itemContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            itemContainer.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleItemFile(files[0]);
-            }
-        });
+    // Real-time search
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', debounce(filterExpenses, 300));
     }
 }
 
-// Load user categories
-async function loadCategories() {
-    if (!currentUser) return;
-    
-    try {
-        const categoriesRef = db.collection('categories')
-            .where('userId', '==', currentUser.uid)
-            .where('type', '==', 'expense');
-        
-        const snapshot = await categoriesRef.get();
-        
-        if (!snapshot.empty) {
-            const categorySelect = document.getElementById('category');
-            if (categorySelect) {
-                // Clear existing options except first
-                while (categorySelect.options.length > 1) {
-                    categorySelect.remove(1);
-                }
-                
-                snapshot.forEach(doc => {
-                    const category = doc.data();
-                    const option = document.createElement('option');
-                    option.value = category.name;
-                    option.textContent = category.name;
-                    categorySelect.appendChild(option);
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error loading categories:', error);
-    }
-}
-
-// Handle expense form submission
-async function handleExpenseSubmit(event) {
-    event.preventDefault();
-    
-    const submitBtn = document.getElementById('submitBtn');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-    
-    // Show loading state
-    btnText.classList.add('hidden');
-    btnLoader.classList.remove('hidden');
-    submitBtn.disabled = true;
-    
-    try {
-        // Get form values
-        const amount = parseFloat(document.getElementById('amount').value);
-        const category = document.getElementById('category').value;
-        const date = new Date(document.getElementById('date').value);
-        const description = document.getElementById('description').value;
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const tags = document.getElementById('tags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
-        const location = document.getElementById('location').value;
-        const notes = document.getElementById('notes').value;
-        
-        // Validate
-        if (isNaN(amount) || amount <= 0) {
-            throw new Error('Please enter a valid amount');
-        }
-        
-        if (!category) {
-            throw new Error('Please select a category');
-        }
-        
-        // Prepare expense data
-        const expenseData = {
-            userId: currentUser.uid,
-            amount: amount,
-            category: category,
-            date: date,
-            description: description || '',
-            paymentMethod: paymentMethod || 'Cash',
-            tags: tags,
-            location: location || '',
-            notes: notes || '',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        // Upload images if selected
-        if (selectedReceiptFile) {
-            updateLoadingStatus('Uploading receipt...');
-            expenseData.receiptUrl = await uploadImage(selectedReceiptFile, 'receipts');
-        }
-        
-        if (selectedItemFile) {
-            updateLoadingStatus('Uploading item image...');
-            expenseData.itemImageUrl = await uploadImage(selectedItemFile, 'items');
-        }
-        
-        // Save to Firestore
-        updateLoadingStatus('Saving expense...');
-        const docRef = await db.collection('expenses').add(expenseData);
-        
-        console.log('Expense saved with ID:', docRef.id);
-        
-        // Show success modal
-        showSuccessModal();
-        
-    } catch (error) {
-        console.error('Error saving expense:', error);
-        showError(error.message || 'Failed to save expense');
-    } finally {
-        // Hide loading state
-        btnText.classList.remove('hidden');
-        btnLoader.classList.add('hidden');
-        submitBtn.disabled = false;
-    }
-}
-
-// Upload image to Firebase Storage
-async function uploadImage(file, folder) {
-    if (!file || !currentUser) return null;
-    
-    const fileName = `${Date.now()}_${file.name}`;
-    const storageRef = storage.ref();
-    const imageRef = storageRef.child(`users/${currentUser.uid}/${folder}/${fileName}`);
-    
-    // Upload file
-    const snapshot = await imageRef.put(file);
-    
-    // Get download URL
-    const downloadUrl = await snapshot.ref.getDownloadURL();
-    
-    return downloadUrl;
-}
-
-// Handle receipt file selection
-function previewReceipt(input) {
-    const file = input.files[0];
-    if (file) {
-        handleReceiptFile(file);
-    }
-}
-
-function handleReceiptFile(file) {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        showError('Please select an image file');
-        return;
-    }
-    
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        showError('File size must be less than 10MB');
-        return;
-    }
-    
-    selectedReceiptFile = file;
-    
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const preview = document.getElementById('receiptPreview');
-        const placeholder = document.getElementById('receiptPlaceholder');
-        const img = preview.querySelector('img');
-        
-        img.src = e.target.result;
-        placeholder.classList.add('hidden');
-        preview.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeReceipt() {
-    selectedReceiptFile = null;
-    document.getElementById('receiptImage').value = '';
-    document.getElementById('receiptPreview').classList.add('hidden');
-    document.getElementById('receiptPlaceholder').classList.remove('hidden');
-}
-
-// Handle item file selection
-function previewItem(input) {
-    const file = input.files[0];
-    if (file) {
-        handleItemFile(file);
-    }
-}
-
-function handleItemFile(file) {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        showError('Please select an image file');
-        return;
-    }
-    
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        showError('File size must be less than 10MB');
-        return;
-    }
-    
-    selectedItemFile = file;
-    
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const preview = document.getElementById('itemPreview');
-        const placeholder = document.getElementById('itemPlaceholder');
-        const img = preview.querySelector('img');
-        
-        img.src = e.target.result;
-        placeholder.classList.add('hidden');
-        preview.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeItem() {
-    selectedItemFile = null;
-    document.getElementById('itemImage').value = '';
-    document.getElementById('itemPreview').classList.add('hidden');
-    document.getElementById('itemPlaceholder').classList.remove('hidden');
-}
-
-// Show success modal
-function showSuccessModal() {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-}
-
-// Show error message
-function showError(message) {
-    // Create error notification
-    const notification = document.createElement('div');
-    notification.className = 'notification error';
-    notification.innerHTML = `
-        <i class="fas fa-exclamation-circle"></i>
-        <span>${message}</span>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-
-// Update loading status
-function updateLoadingStatus(status) {
-    const statusEl = document.getElementById('loadingStatus');
-    if (statusEl) {
-        statusEl.textContent = status;
-    }
-}
-
-// Load expenses list (for expenses.html)
-async function loadExpensesList() {
+// Load expenses from Firestore
+async function loadExpenses() {
     if (!currentUser) return;
     
     const expensesList = document.getElementById('expensesList');
@@ -329,96 +69,424 @@ async function loadExpensesList() {
     
     try {
         // Show loading
-        expensesList.innerHTML = '<div class="loading">Loading expenses...</div>';
+        expensesList.innerHTML = `
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading expenses...</p>
+            </div>
+        `;
         
-        // Get current month date range
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
-        // Query expenses
+        // Get all expenses for the user
         const snapshot = await db.collection('expenses')
             .where('userId', '==', currentUser.uid)
             .orderBy('date', 'desc')
             .get();
         
-        if (snapshot.empty) {
-            expensesList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-receipt"></i>
-                    <h3>No expenses yet</h3>
-                    <p>Start tracking your expenses by adding your first expense.</p>
-                    <button class="btn btn-primary" onclick="window.location.href='add-expense.html'">
-                        <i class="fas fa-plus"></i> Add Expense
-                    </button>
-                </div>
-            `;
-            return;
-        }
-        
-        // Group expenses by date
-        let html = '';
-        let currentDate = '';
-        
+        allExpenses = [];
         snapshot.forEach(doc => {
-            const expense = doc.data();
-            expense.id = doc.id;
-            
-            const expenseDate = expense.date.toDate();
-            const dateStr = expenseDate.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+            allExpenses.push({
+                id: doc.id,
+                ...doc.data()
             });
-            
-            if (dateStr !== currentDate) {
-                if (currentDate) {
-                    html += '</div>';
-                }
-                currentDate = dateStr;
-                html += `<h3 class="date-header">${dateStr}</h3><div class="expenses-group">`;
-            }
-            
-            html += `
-                <div class="expense-item" onclick="viewExpense('${expense.id}')">
-                    <div class="expense-icon">
-                        ${expense.receiptUrl ? '<i class="fas fa-image"></i>' : '<i class="fas fa-receipt"></i>'}
-                    </div>
-                    <div class="expense-details">
-                        <span class="expense-category">${expense.category}</span>
-                        <span class="expense-description">${expense.description || 'No description'}</span>
-                        ${expense.tags && expense.tags.length ? 
-                            `<span class="expense-tags">${expense.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</span>` 
-                            : ''}
-                    </div>
-                    <div class="expense-amount">
-                        $${expense.amount.toFixed(2)}
-                        ${expense.receiptUrl ? '<i class="fas fa-paperclip"></i>' : ''}
-                    </div>
-                </div>
-            `;
         });
         
-        if (currentDate) {
-            html += '</div>';
-        }
+        filteredExpenses = [...allExpenses];
         
-        expensesList.innerHTML = html;
+        // Update summary
+        updateSummary();
+        
+        // Display expenses
+        displayExpenses();
         
     } catch (error) {
         console.error('Error loading expenses:', error);
+        showNotification('Failed to load expenses', 'error');
         expensesList.innerHTML = `
-            <div class="error-state">
+            <div class="empty-state">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Failed to load expenses. Please try again.</p>
-                <button class="btn btn-primary" onclick="loadExpensesList()">Retry</button>
+                <h3>Error Loading Expenses</h3>
+                <p>${error.message}</p>
+                <button class="btn btn-primary" onclick="loadExpenses()">Retry</button>
             </div>
         `;
     }
 }
 
-// View expense details
-function viewExpense(expenseId) {
-    window.location.href = `view-expense.html?id=${expenseId}`;
+// Update summary statistics
+function updateSummary() {
+    // Calculate monthly total
+    const now = new Date();
+    const monthlyExpenses = allExpenses.filter(expense => {
+        const expenseDate = expense.date.toDate();
+        return expenseDate.getMonth() === now.getMonth() &&
+               expenseDate.getFullYear() === now.getFullYear();
+    });
+    
+    const monthlyTotal = monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    
+    // Calculate average expense
+    const average = allExpenses.length > 0 
+        ? allExpenses.reduce((sum, exp) => sum + exp.amount, 0) / allExpenses.length 
+        : 0;
+    
+    // Get unique categories
+    const categories = new Set(allExpenses.map(exp => exp.category));
+    
+    // Update UI
+    document.getElementById('monthlyTotal').textContent = formatCurrency(monthlyTotal);
+    document.getElementById('averageExpense').textContent = formatCurrency(average);
+    document.getElementById('categoryCount').textContent = categories.size;
+    document.getElementById('totalCount').textContent = allExpenses.length;
 }
+
+// Display expenses with pagination
+function displayExpenses() {
+    const expensesList = document.getElementById('expensesList');
+    const paginationDiv = document.getElementById('pagination');
+    
+    if (!expensesList) return;
+    
+    if (filteredExpenses.length === 0) {
+        expensesList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <h3>No expenses found</h3>
+                <p>Start tracking your expenses by adding your first expense.</p>
+                <button class="btn btn-primary" onclick="window.location.href='add-expense.html'">
+                    <i class="fas fa-plus"></i> Add Expense
+                </button>
+            </div>
+        `;
+        if (paginationDiv) paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    // Calculate pagination
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginatedExpenses = filteredExpenses.slice(start, end);
+    const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+    
+    // Generate HTML
+    expensesList.innerHTML = paginatedExpenses.map(expense => `
+        <div class="expense-item" onclick="viewExpense('${expense.id}')">
+            <div class="expense-category">
+                <span class="category-badge">${expense.category || 'Uncategorized'}</span>
+                <span class="expense-description">${expense.description || 'No description'}</span>
+            </div>
+            <div class="expense-date">${formatDate(expense.date)}</div>
+            <div class="expense-amount">
+                $${expense.amount.toFixed(2)}
+                ${expense.receiptUrl ? '<i class="fas fa-image receipt-indicator" title="Has receipt"></i>' : ''}
+                ${expense.itemImageUrl ? '<i class="fas fa-camera receipt-indicator" title="Has item image"></i>' : ''}
+            </div>
+            <div class="expense-actions" onclick="event.stopPropagation()">
+                <button class="action-btn" onclick="editExpense('${expense.id}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete" onclick="deleteExpense('${expense.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    // Generate pagination
+    if (paginationDiv) {
+        let paginationHtml = '';
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHtml += `
+                <button class="page-btn ${i === currentPage ? 'active' : ''}" 
+                        onclick="changePage(${i})">${i}</button>
+            `;
+        }
+        paginationDiv.innerHTML = paginationHtml;
+    }
+}
+
+// Filter expenses
+function filterExpenses() {
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const category = document.getElementById('categoryFilter')?.value || '';
+    const dateFilter = document.getElementById('dateFilter')?.value || 'all';
+    const sortBy = document.getElementById('sortFilter')?.value || 'newest';
+    
+    filteredExpenses = allExpenses.filter(expense => {
+        // Search filter
+        const matchesSearch = searchTerm === '' || 
+            (expense.description && expense.description.toLowerCase().includes(searchTerm)) ||
+            (expense.category && expense.category.toLowerCase().includes(searchTerm));
+        
+        // Category filter
+        const matchesCategory = category === '' || expense.category === category;
+        
+        // Date filter
+        let matchesDate = true;
+        const expenseDate = expense.date.toDate();
+        const now = new Date();
+        
+        if (dateFilter === 'today') {
+            matchesDate = expenseDate.toDateString() === now.toDateString();
+        } else if (dateFilter === 'week') {
+            const weekAgo = new Date(now.setDate(now.getDate() - 7));
+            matchesDate = expenseDate >= weekAgo;
+        } else if (dateFilter === 'month') {
+            matchesDate = expenseDate.getMonth() === now.getMonth() &&
+                         expenseDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === 'year') {
+            matchesDate = expenseDate.getFullYear() === now.getFullYear();
+        }
+        
+        return matchesSearch && matchesCategory && matchesDate;
+    });
+    
+    // Sort
+    filteredExpenses.sort((a, b) => {
+        if (sortBy === 'newest') {
+            return b.date.toDate() - a.date.toDate();
+        } else if (sortBy === 'oldest') {
+            return a.date.toDate() - b.date.toDate();
+        } else if (sortBy === 'highest') {
+            return b.amount - a.amount;
+        } else if (sortBy === 'lowest') {
+            return a.amount - b.amount;
+        }
+    });
+    
+    currentPage = 1;
+    displayExpenses();
+}
+
+// Change page
+function changePage(page) {
+    currentPage = page;
+    displayExpenses();
+}
+
+// View expense details
+async function viewExpense(expenseId) {
+    const expense = allExpenses.find(e => e.id === expenseId);
+    if (!expense) return;
+    
+    currentExpenseId = expenseId;
+    
+    const modalBody = document.getElementById('expenseDetailBody');
+    if (!modalBody) return;
+    
+    modalBody.innerHTML = `
+        <div class="detail-row">
+            <span class="detail-label">Amount:</span>
+            <span class="detail-value">$${expense.amount.toFixed(2)}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Category:</span>
+            <span class="detail-value">${expense.category || 'Uncategorized'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Date:</span>
+            <span class="detail-value">${formatDate(expense.date, 'full')}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Description:</span>
+            <span class="detail-value">${expense.description || 'No description'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Payment Method:</span>
+            <span class="detail-value">${expense.paymentMethod || 'Not specified'}</span>
+        </div>
+        ${expense.notes ? `
+        <div class="detail-row">
+            <span class="detail-label">Notes:</span>
+            <span class="detail-value">${expense.notes}</span>
+        </div>
+        ` : ''}
+        ${expense.receiptUrl ? `
+        <div class="detail-row">
+            <span class="detail-label">Receipt:</span>
+            <div class="detail-value">
+                <img src="${expense.receiptUrl}" class="receipt-image" onclick="window.open('${expense.receiptUrl}')">
+            </div>
+        </div>
+        ` : ''}
+        ${expense.itemImageUrl ? `
+        <div class="detail-row">
+            <span class="detail-label">Item Image:</span>
+            <div class="detail-value">
+                <img src="${expense.itemImageUrl}" class="receipt-image" onclick="window.open('${expense.itemImageUrl}')">
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('expenseModal').classList.add('active');
+}
+
+// Edit expense
+function editExpense(expenseId) {
+    window.location.href = `edit-expense.html?id=${expenseId}`;
+}
+
+// Delete expense
+async function deleteExpense(expenseId) {
+    if (!confirm('Are you sure you want to delete this expense?')) {
+        return;
+    }
+    
+    try {
+        // Get expense data first to check for images
+        const expenseDoc = await db.collection('expenses').doc(expenseId).get();
+        const expenseData = expenseDoc.data();
+        
+        // Delete images from storage if they exist
+        if (expenseData.receiptUrl) {
+            try {
+                const receiptRef = storage.refFromURL(expenseData.receiptUrl);
+                await receiptRef.delete();
+            } catch (e) {
+                console.log('Receipt not found in storage');
+            }
+        }
+        
+        if (expenseData.itemImageUrl) {
+            try {
+                const itemRef = storage.refFromURL(expenseData.itemImageUrl);
+                await itemRef.delete();
+            } catch (e) {
+                console.log('Item image not found in storage');
+            }
+        }
+        
+        // Delete expense document
+        await db.collection('expenses').doc(expenseId).delete();
+        
+        // Reload expenses
+        await loadExpenses();
+        
+        showNotification('Expense deleted successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error deleting expense:', error);
+        showNotification('Failed to delete expense', 'error');
+    }
+}
+
+// Delete current expense (from modal)
+async function deleteCurrentExpense() {
+    if (currentExpenseId) {
+        closeModal();
+        await deleteExpense(currentExpenseId);
+    }
+}
+
+// Close modal
+function closeModal() {
+    document.getElementById('expenseModal').classList.remove('active');
+    currentExpenseId = null;
+}
+
+// Export expenses
+function exportExpenses() {
+    if (filteredExpenses.length === 0) {
+        showNotification('No expenses to export', 'error');
+        return;
+    }
+    
+    // Prepare CSV data
+    const headers = ['Date', 'Category', 'Description', 'Amount', 'Payment Method', 'Notes'];
+    const csvData = filteredExpenses.map(expense => [
+        formatDate(expense.date, 'full'),
+        expense.category || 'Uncategorized',
+        expense.description || '',
+        expense.amount,
+        expense.paymentMethod || '',
+        expense.notes || ''
+    ]);
+    
+    csvData.unshift(headers);
+    
+    // Convert to CSV
+    const csv = csvData.map(row => row.join(',')).join('\n');
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `expenses-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    
+    showNotification('Expenses exported successfully', 'success');
+}
+
+// Helper: Format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount || 0);
+}
+
+// Helper: Format date
+function formatDate(timestamp, format = 'short') {
+    if (!timestamp) return 'N/A';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    
+    if (format === 'full') {
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    }
+    
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+// Helper: Debounce
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notificationContainer');
+    if (!container) return;
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                         type === 'error' ? 'fa-exclamation-circle' : 
+                         'fa-info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Make functions globally available
+window.filterExpenses = filterExpenses;
+window.changePage = changePage;
+window.viewExpense = viewExpense;
+window.editExpense = editExpense;
+window.deleteExpense = deleteExpense;
+window.deleteCurrentExpense = deleteCurrentExpense;
+window.closeModal = closeModal;
+window.exportExpenses = exportExpenses;
+window.logout = logout;
