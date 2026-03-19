@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses - ExpenseTracker</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        /* ========================================
+           EXPENSES PAGE STYLES
+        ======================================== */
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --primary-gradient: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --secondary: #1976D2;
+            --income: #00C853;
+            --expense: #FF3D00;
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --text-muted: #95A5A6;
+            --border-color: #E0E0E0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s ease;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-brand i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--expense);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-logout:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main Container */
+        .expenses-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .expenses-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .expenses-header h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
+        }
+
+        .expenses-header h1 i {
+            color: var(--expense);
+            margin-right: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--expense);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+
+        /* Filters */
+        .filters-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 61, 0, 0.1);
+            color: var(--expense);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .summary-details h3 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .summary-details .amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--expense);
+        }
+
+        /* Expenses List */
+        .expenses-list {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .list-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+            padding: 15px 20px;
+            background: var(--bg-primary);
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .expense-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+            padding: 15px 20px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .expense-item:hover {
+            background: var(--bg-primary);
+            transform: translateX(5px);
+        }
+
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+
+        .expense-category {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-badge {
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--primary);
+        }
+
+        .expense-description {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .expense-date {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .expense-amount {
+            font-weight: 700;
+            color: var(--expense);
+        }
+
+        .expense-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 1rem;
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .action-btn.delete:hover {
+            color: var(--expense);
+        }
+
+        /* Receipt Indicators */
+        .receipt-indicator {
+            margin-left: 8px;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-label {
+            width: 120px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .receipt-image {
+            max-width: 100%;
+            border-radius: var(--radius-md);
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--income);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--expense);
+        }
+
+        .notification.info {
+            border-left: 4px solid var(--secondary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: white;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .page-btn:hover,
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .expenses-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .list-header {
+                display: none;
+            }
+
+            .expense-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .expense-actions {
+                justify-content: flex-end;
+            }
+
+            .filters-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-select {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-wallet"></i>
+            <span>ExpenseTracker</span>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="expenses.html" class="active">Expenses</a>
+            <a href="income.html">Income</a>
+            <a href="reports.html">Reports</a>
+            <a href="receipts.html">Receipts</a>
+            <a href="settings.html">Settings</a>
+        </div>
+        <div class="nav-user" id="navUser"></div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="expenses-container">
+        <!-- Header -->
+        <div class="expenses-header">
+            <h1><i class="fas fa-arrow-down"></i> Expenses</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="window.location.href='add-expense.html'">
+                    <i class="fas fa-plus"></i> Add Expense
+                </button>
+                <button class="btn btn-outline" onclick="exportExpenses()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="summary-details">
+                    <h3>This Month</h3>
+                    <span class="amount" id="monthlyTotal">$0.00</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="summary-details">
+                    <h3>Average</h3>
+                    <span class="amount" id="averageExpense">$0.00</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="summary-details">
+                    <h3>Categories</h3>
+                    <span class="amount" id="categoryCount">0</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="summary-details">
+                    <h3>Total Items</h3>
+                    <span class="amount" id="totalCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search expenses..." onkeyup="filterExpenses()">
+            </div>
+            <div class="filter-group">
+                <select id="categoryFilter" class="filter-select" onchange="filterExpenses()">
+                    <option value="">All Categories</option>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Bills & Utilities">Bills & Utilities</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Education">Education</option>
+                </select>
+                <select id="dateFilter" class="filter-select" onchange="filterExpenses()">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                </select>
+                <select id="sortFilter" class="filter-select" onchange="filterExpenses()">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="highest">Highest Amount</option>
+                    <option value="lowest">Lowest Amount</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Expenses List -->
+        <div class="expenses-list">
+            <div class="list-header">
+                <span>Description</span>
+                <span>Category</span>
+                <span>Date</span>
+                <span>Amount</span>
+                <span>Actions</span>
+            </div>
+            <div id="expensesList">
+                <!-- Expenses will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Expense Detail Modal -->
+    <div class="modal" id="expenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Expense Details</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="expenseDetailBody">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Close</button>
+                <button class="btn btn-danger" onclick="deleteCurrentExpense()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/expenses.js"></script>
+</body>
+</html>
