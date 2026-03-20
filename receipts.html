@@ -2,19 +2,756 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Receipts - ExpenseTracker</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/receipts.css">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        /* ========================================
+           RECEIPTS GALLERY STYLES - FULLY RESPONSIVE
+        ======================================== */
+        
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --primary-gradient: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --secondary: #1976D2;
+            --income: #00C853;
+            --expense: #FF3D00;
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --text-muted: #95A5A6;
+            --border-color: #E0E0E0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s ease;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-brand i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--expense);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            padding: 0.5rem;
+        }
+
+        .btn-logout:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Main Container */
+        .receipts-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .receipts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .receipts-header h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
+        }
+
+        .receipts-header h1 i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .receipts-header p {
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-family: var(--font-family);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        /* Filters Section */
+        .receipts-filters {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            font-family: var(--font-family);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .receipts-filters select {
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+            font-family: var(--font-family);
+        }
+
+        .receipts-filters select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Receipts Grid - Responsive Masonry Style */
+        .receipts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* Receipt Card */
+        .receipt-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .receipt-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .receipt-image {
+            position: relative;
+            background: var(--bg-primary);
+            height: 220px;
+            overflow: hidden;
+        }
+
+        .receipt-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--transition-base);
+        }
+
+        .receipt-card:hover .receipt-image img {
+            transform: scale(1.05);
+        }
+
+        .receipt-type {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(4px);
+        }
+
+        .receipt-type.receipt {
+            background: rgba(46, 125, 50, 0.9);
+        }
+
+        .receipt-type.item {
+            background: rgba(25, 118, 210, 0.9);
+        }
+
+        .receipt-details {
+            padding: 16px;
+        }
+
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .receipt-category {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .receipt-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--expense);
+        }
+
+        .receipt-description {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .receipt-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .receipt-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-icon:hover {
+            color: var(--expense);
+            background: rgba(255, 61, 0, 0.1);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 60px;
+            grid-column: 1 / -1;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Lightbox Modal */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 80vh;
+        }
+
+        .lightbox-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: var(--radius-lg);
+        }
+
+        .lightbox-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 20px;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+
+        .close-lightbox {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+            z-index: 2001;
+            transition: all var(--transition-fast);
+        }
+
+        .close-lightbox:hover {
+            transform: scale(1.1);
+        }
+
+        .lightbox-prev,
+        .lightbox-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            font-size: 2rem;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .lightbox-prev {
+            left: 20px;
+        }
+
+        .lightbox-next {
+            right: 20px;
+        }
+
+        .lightbox-prev:hover,
+        .lightbox-next:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--income);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--expense);
+        }
+
+        .notification.info {
+            border-left: 4px solid var(--secondary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .receipts-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+                position: relative;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: var(--shadow-lg);
+                z-index: 999;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 12px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .nav-links a:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-user {
+                display: none;
+            }
+
+            .receipts-container {
+                margin: 20px auto;
+                padding: 0 16px;
+            }
+
+            .receipts-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .receipts-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .receipts-header p {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .receipts-filters {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 16px;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .receipts-filters select {
+                width: 100%;
+            }
+
+            .receipts-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .receipt-image {
+                height: 200px;
+            }
+
+            .lightbox-prev,
+            .lightbox-next {
+                padding: 10px 15px;
+                font-size: 1.5rem;
+            }
+
+            .lightbox-prev {
+                left: 10px;
+            }
+
+            .lightbox-next {
+                right: 10px;
+            }
+
+            .notification-container {
+                left: 16px;
+                right: 16px;
+            }
+
+            .notification {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .receipt-image {
+                height: 180px;
+            }
+
+            .receipt-amount {
+                font-size: 1.1rem;
+            }
+
+            .receipt-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .lightbox-info {
+                font-size: 0.9rem;
+                padding: 15px;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .receipt-card,
+            .btn-icon,
+            .lightbox-prev,
+            .lightbox-next {
+                min-height: 44px;
+            }
+
+            .receipt-card {
+                cursor: pointer;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            body.dark-mode {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --text-primary: #ffffff;
+                --text-secondary: #b0b0b0;
+                --text-muted: #808080;
+                --border-color: #404040;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -23,13 +760,20 @@
             <i class="fas fa-wallet"></i>
             <span>ExpenseTracker</span>
         </div>
-        <div class="nav-links">
+        
+        <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="nav-links" id="navLinks">
             <a href="dashboard.html">Dashboard</a>
             <a href="expenses.html">Expenses</a>
             <a href="income.html">Income</a>
             <a href="reports.html">Reports</a>
             <a href="receipts.html" class="active">Receipts</a>
+            <a href="settings.html">Settings</a>
         </div>
+        
         <div class="nav-user" id="navUser"></div>
     </nav>
 
@@ -49,38 +793,366 @@
         <div class="receipts-filters">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search receipts..." onkeyup="filterReceipts()">
+                <input type="text" id="searchInput" placeholder="Search by description or category..." onkeyup="filterReceipts()">
             </div>
             <select id="filterType" onchange="filterReceipts()">
-                <option value="all">All Images</option>
-                <option value="receipts">Receipts Only</option>
-                <option value="items">Item Images Only</option>
+                <option value="all">📷 All Images</option>
+                <option value="receipts">🧾 Receipts Only</option>
+                <option value="items">📸 Item Images Only</option>
             </select>
             <select id="sortBy" onchange="sortReceipts()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="amount">Highest Amount</option>
+                <option value="newest">🕒 Newest First</option>
+                <option value="oldest">🕒 Oldest First</option>
+                <option value="amount">💰 Highest Amount</option>
             </select>
         </div>
 
         <!-- Receipts Grid -->
         <div class="receipts-grid" id="receiptsGrid">
-            <!-- Receipts will be loaded here -->
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading your receipts...</p>
+            </div>
         </div>
     </div>
 
     <!-- Lightbox Modal -->
-    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-        <span class="close-lightbox">&times;</span>
-        <div class="lightbox-content">
+    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+        <span class="close-lightbox" onclick="closeLightbox()">&times;</span>
+        <button class="lightbox-prev" onclick="event.stopPropagation(); navigateLightbox(-1)">&#10094;</button>
+        <button class="lightbox-next" onclick="event.stopPropagation(); navigateLightbox(1)">&#10095;</button>
+        <div class="lightbox-content" onclick="event.stopPropagation()">
             <img id="lightboxImage" src="" alt="Receipt">
             <div class="lightbox-info" id="lightboxInfo"></div>
         </div>
-        <button class="lightbox-prev" onclick="navigateLightbox(-1)">&#10094;</button>
-        <button class="lightbox-next" onclick="navigateLightbox(1)">&#10095;</button>
     </div>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/receipts.js"></script>
-</body>
-</html>
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+            authDomain: "expense-tracker-aebb1.firebaseapp.com",
+            projectId: "expense-tracker-aebb1",
+            storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+            messagingSenderId: "220896439984",
+            appId: "1:220896439984:web:645c8656c3ba1d39991575"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Global variables
+        let currentUser = null;
+        let allReceipts = [];
+        let filteredReceipts = [];
+        let currentLightboxIndex = 0;
+
+        // Currency Helper for Malawi Kwacha
+        const CurrencyHelper = {
+            symbol: 'MK',
+            format(amount) {
+                const value = Math.round(amount || 0);
+                return `MK ${value.toLocaleString()}`;
+            }
+        };
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navLinks = document.getElementById('navLinks');
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            
+            if (navLinks && mobileBtn && !navLinks.contains(event.target) && !mobileBtn.contains(event.target)) {
+                navLinks.classList.remove('active');
+            }
+        });
+
+        // Check authentication
+        function checkAuth() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    updateUserInfo(user);
+                    loadReceipts();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Update user info
+        function updateUserInfo(user) {
+            const navUser = document.getElementById('navUser');
+            if (navUser && user) {
+                navUser.innerHTML = `
+                    <div class="user-dropdown">
+                        <span>${user.displayName || user.email}</span>
+                        <button onclick="logout()" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await auth.signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Failed to logout', 'error');
+            }
+        }
+
+        // Load receipts
+        async function loadReceipts() {
+            if (!currentUser) return;
+            
+            const grid = document.getElementById('receiptsGrid');
+            if (!grid) return;
+            
+            try {
+                // Show loading
+                grid.innerHTML = `
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Loading your receipts...</p>
+                    </div>
+                `;
+                
+                // Query expenses that have receipt or item images
+                const snapshot = await db.collection('expenses')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                allReceipts = [];
+                
+                snapshot.forEach(doc => {
+                    const expense = doc.data();
+                    expense.id = doc.id;
+                    
+                    // Add receipt if exists
+                    if (expense.receiptUrl) {
+                        allReceipts.push({
+                            id: expense.id,
+                            type: 'receipt',
+                            url: expense.receiptUrl,
+                            date: expense.date,
+                            amount: expense.amount,
+                            category: expense.category,
+                            description: expense.description,
+                            paymentMethod: expense.paymentMethod
+                        });
+                    }
+                    
+                    // Add item image if exists
+                    if (expense.itemImageUrl) {
+                        allReceipts.push({
+                            id: expense.id,
+                            type: 'item',
+                            url: expense.itemImageUrl,
+                            date: expense.date,
+                            amount: expense.amount,
+                            category: expense.category,
+                            description: expense.description,
+                            paymentMethod: expense.paymentMethod
+                        });
+                    }
+                });
+                
+                filteredReceipts = [...allReceipts];
+                displayReceipts();
+                
+            } catch (error) {
+                console.error('Error loading receipts:', error);
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Receipts</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="loadReceipts()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Display receipts
+        function displayReceipts() {
+            const grid = document.getElementById('receiptsGrid');
+            if (!grid) return;
+            
+            if (filteredReceipts.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <h3>No receipts found</h3>
+                        <p>Start adding expenses with receipts to see them here.</p>
+                        <button class="btn btn-primary" onclick="window.location.href='add-expense.html'">
+                            <i class="fas fa-plus"></i> Add Expense with Receipt
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredReceipts.map((receipt, index) => `
+                <div class="receipt-card" onclick="openLightbox(${index})">
+                    <div class="receipt-image">
+                        <img src="${receipt.url}" alt="Receipt" loading="lazy">
+                        <span class="receipt-type ${receipt.type}">
+                            <i class="fas ${receipt.type === 'receipt' ? 'fa-receipt' : 'fa-camera'}"></i>
+                            ${receipt.type === 'receipt' ? 'Receipt' : 'Item Photo'}
+                        </span>
+                    </div>
+                    <div class="receipt-details">
+                        <div class="receipt-header">
+                            <span class="receipt-category">
+                                <i class="fas fa-tag"></i> ${receipt.category || 'Uncategorized'}
+                            </span>
+                            <span class="receipt-amount">${CurrencyHelper.format(receipt.amount)}</span>
+                        </div>
+                        <p class="receipt-description">${receipt.description || 'No description'}</p>
+                        <div class="receipt-footer">
+                            <span class="receipt-date">
+                                <i class="far fa-calendar-alt"></i> ${formatDate(receipt.date)}
+                            </span>
+                            <button class="btn-icon" onclick="event.stopPropagation(); deleteReceipt('${receipt.id}', '${receipt.type}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter receipts
+        function filterReceipts() {
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const filterType = document.getElementById('filterType')?.value || 'all';
+            
+            filteredReceipts = allReceipts.filter(receipt => {
+                // Filter by type
+                if (filterType !== 'all' && receipt.type !== filterType) {
+                    return false;
+                }
+                
+                // Filter by search term
+                if (searchTerm) {
+                    const matchesDescription = receipt.description?.toLowerCase().includes(searchTerm) || false;
+                    const matchesCategory = receipt.category?.toLowerCase().includes(searchTerm) || false;
+                    return matchesDescription || matchesCategory;
+                }
+                
+                return true;
+            });
+            
+            sortReceipts(false);
+        }
+
+        // Sort receipts
+        function sortReceipts(applyFilter = true) {
+            const sortBy = document.getElementById('sortBy')?.value || 'newest';
+            
+            if (applyFilter) {
+                filterReceipts();
+            } else {
+                switch(sortBy) {
+                    case 'newest':
+                        filteredReceipts.sort((a, b) => b.date.toDate() - a.date.toDate());
+                        break;
+                    case 'oldest':
+                        filteredReceipts.sort((a, b) => a.date.toDate() - b.date.toDate());
+                        break;
+                    case 'amount':
+                        filteredReceipts.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+                        break;
+                }
+                
+                displayReceipts();
+            }
+        }
+
+        // Lightbox functions
+        function openLightbox(index) {
+            currentLightboxIndex = index;
+            updateLightbox();
+            document.getElementById('lightbox').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox(event) {
+            if (event && event.target !== event.currentTarget && !event.target.classList.contains('close-lightbox')) {
+                return;
+            }
+            document.getElementById('lightbox').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function navigateLightbox(direction) {
+            currentLightboxIndex += direction;
+            
+            if (currentLightboxIndex < 0) {
+                currentLightboxIndex = filteredReceipts.length - 1;
+            } else if (currentLightboxIndex >= filteredReceipts.length) {
+                currentLightboxIndex = 0;
+            }
+            
+            updateLightbox();
+        }
+
+        function updateLightbox() {
+            const receipt = filteredReceipts[currentLightboxIndex];
+            const lightboxImage = document.getElementById('lightboxImage');
+            const lightboxInfo = document.getElementById('lightboxInfo');
+            
+            lightboxImage.src = receipt.url;
+            lightboxInfo.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <span style="background: ${receipt.type === 'receipt' ? '#2E7D32' : '#1976D2'}; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">
+                        <i class="fas ${receipt.type === 'receipt' ? 'fa-receipt' : 'fa-camera'}"></i>
+                        ${receipt.type === 'receipt' ? 'Receipt' : 'Item Photo'}
+                    </span>
+                    <span style="font-size: 1.2rem; font-weight: bold;">${CurrencyHelper.format(receipt.amount)}</span>
+                </div>
+                <p style="margin-top: 10px;"><strong>Category:</strong> ${receipt.category || 'Uncategorized'}</p>
+                <p><strong>Description:</strong> ${receipt.description || 'No description'}</p>
+                <p><strong>Payment Method:</strong> ${receipt.paymentMethod || 'Not specified'}</p>
+                <p><strong>Date:</strong> ${formatDate(receipt.date, 'full')}</p>
+                <button class="btn btn-primary" style="margin-top: 15px; width: 100%;" onclick="viewExpense('${receipt.id}')">
+                    View Full Expense Details
+                </button>
+            `;
+        }
+
+        // Delete receipt
+        async function deleteReceipt(expenseId, type, event) {
+            if (event) event.stopPropagation();
+            
+            if (!confirm(`Are you sure you want to delete this ${type === 'receipt' ? 'receipt' : 'item image'}?`)) {
+                return;
+            }
+            
+            try {
+                const expenseRef = db.collection('exp
