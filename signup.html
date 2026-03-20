@@ -2,19 +2,553 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Sign Up - ExpenseTracker</title>
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/auth.css">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        /* ========================================
+           SIGNUP PAGE STYLES - FULLY RESPONSIVE
+        ======================================== */
+        
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --primary-gradient: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --secondary: #1976D2;
+            --income: #00C853;
+            --expense: #FF3D00;
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --text-muted: #95A5A6;
+            --border-color: #E0E0E0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s ease;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Preloader Styles */
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+        }
+
+        .preloader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .preloader-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .coin-stack {
+            position: relative;
+            height: 150px;
+            width: 150px;
+            margin: 0 auto 2rem;
+        }
+
+        .coin {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 4rem;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            animation: coinGlow 2s ease-in-out infinite;
+        }
+
+        .coin-1 { bottom: 0; animation-delay: 0s; }
+        .coin-2 { bottom: 40px; animation-delay: 0.2s; }
+        .coin-3 { bottom: 80px; animation-delay: 0.4s; }
+
+        @keyframes coinGlow {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.1);
+                filter: brightness(1.3);
+            }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4CAF50, #FFD700, #4CAF50);
+            background-size: 200% 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            animation: shimmer 2s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        .preloader-text h3 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-family);
+        }
+
+        .loading-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+
+        .percentage-text {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: var(--font-family);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Auth Container */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .auth-header h2 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            font-family: var(--font-family);
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group label i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: white;
+            font-family: var(--font-family);
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .form-group input.error {
+            border-color: var(--expense);
+        }
+
+        .password-strength {
+            position: absolute;
+            right: 15px;
+            top: 45px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Terms Checkbox */
+        .terms {
+            margin: 20px 0;
+        }
+
+        .terms label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .terms a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .terms a:hover {
+            text-decoration: underline;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: var(--font-family);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+            width: 100%;
+            padding: 14px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-loader {
+            display: none;
+        }
+
+        /* Social Login */
+        .social-login {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .social-login p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .social-login p::before,
+        .social-login p::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .social-login p::before { left: 0; }
+        .social-login p::after { right: 0; }
+
+        .btn-google {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .btn-google:hover {
+            background: #f5f5f5;
+            border-color: var(--primary);
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Auth Footer */
+        .auth-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Notification Container */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+            max-width: 350px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.fade-out {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        .notification-success {
+            border-left: 4px solid var(--income);
+        }
+        .notification-success i { color: var(--income); }
+        
+        .notification-error {
+            border-left: 4px solid var(--expense);
+        }
+        .notification-error i { color: var(--expense); }
+        
+        .notification-info {
+            border-left: 4px solid var(--secondary);
+        }
+        .notification-info i { color: var(--secondary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .auth-box {
+                padding: 30px 20px;
+            }
+            
+            .auth-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .preloader-text h3 {
+                font-size: 1.5rem;
+            }
+            
+            .coin-stack {
+                height: 120px;
+                width: 120px;
+            }
+            
+            .coin {
+                font-size: 3rem;
+            }
+            
+            .percentage-text {
+                font-size: 2rem;
+            }
+            
+            .notification-container {
+                left: 16px;
+                right: 16px;
+            }
+            
+            .notification {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-box {
+                padding: 25px 15px;
+            }
+            
+            .form-group input {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Preloader -->
@@ -47,14 +581,14 @@
                 <p>Start tracking your expenses today</p>
             </div>
             
-            <form id="signupForm" onsubmit="handleSignup(event)">
+            <form id="signupForm">
                 <div class="form-group">
                     <label for="fullName">
                         <i class="fas fa-user"></i>
                         Full Name
                     </label>
                     <input type="text" id="fullName" name="fullName" required 
-                           placeholder="Enter your full name">
+                           placeholder="Enter your full name" autocomplete="name">
                 </div>
                 
                 <div class="form-group">
@@ -63,7 +597,7 @@
                         Email
                     </label>
                     <input type="email" id="email" name="email" required 
-                           placeholder="Enter your email">
+                           placeholder="Enter your email" autocomplete="email">
                 </div>
                 
                 <div class="form-group">
@@ -72,7 +606,8 @@
                         Password
                     </label>
                     <input type="password" id="password" name="password" required 
-                           placeholder="Create a password" minlength="6">
+                           placeholder="Create a password (min. 6 characters)" minlength="6"
+                           autocomplete="new-password">
                     <span class="password-strength" id="passwordStrength"></span>
                 </div>
                 
@@ -82,7 +617,7 @@
                         Confirm Password
                     </label>
                     <input type="password" id="confirmPassword" name="confirmPassword" required 
-                           placeholder="Confirm your password">
+                           placeholder="Confirm your password" autocomplete="new-password">
                 </div>
                 
                 <div class="form-group terms">
@@ -94,15 +629,15 @@
                 
                 <button type="submit" class="btn btn-primary btn-block" id="signupBtn">
                     <span class="btn-text">Create Account</span>
-                    <span class="btn-loader hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    <span class="btn-loader"><i class="fas fa-spinner fa-spin"></i> Creating...</span>
                 </button>
             </form>
             
             <div class="social-login">
                 <p>Or sign up with</p>
-                <button class="btn-google" onclick="handleGoogleSignup()">
+                <button class="btn-google" id="googleSignupBtn">
                     <img src="https://www.google.com/favicon.ico" alt="Google">
-                    Google
+                    Continue with Google
                 </button>
             </div>
             
@@ -112,8 +647,354 @@
         </div>
     </div>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/preloader.js"></script>
-    <script src="js/auth.js"></script>
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+            authDomain: "expense-tracker-aebb1.firebaseapp.com",
+            projectId: "expense-tracker-aebb1",
+            storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+            messagingSenderId: "220896439984",
+            appId: "1:220896439984:web:645c8656c3ba1d39991575"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Global variables
+        let progress = 0;
+        let preloaderInterval;
+
+        // Preloader animation
+        document.addEventListener('DOMContentLoaded', function() {
+            startPreloader();
+            
+            // Set up password strength checker
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) {
+                passwordInput.addEventListener('input', checkPasswordStrength);
+            }
+            
+            // Set up form submission
+            const signupForm = document.getElementById('signupForm');
+            if (signupForm) {
+                signupForm.addEventListener('submit', handleSignup);
+            }
+            
+            // Set up Google signup
+            const googleBtn = document.getElementById('googleSignupBtn');
+            if (googleBtn) {
+                googleBtn.addEventListener('click', handleGoogleSignup);
+            }
+        });
+
+        // Start preloader animation
+        function startPreloader() {
+            const preloader = document.getElementById('preloader');
+            const progressBar = document.getElementById('preloader-progress');
+            const percentageText = document.getElementById('percentage');
+            const loadingText = document.querySelector('.loading-text');
+            
+            preloaderInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                if (progressBar) progressBar.style.width = progress + '%';
+                if (percentageText) percentageText.textContent = Math.floor(progress) + '%';
+                
+                if (loadingText) {
+                    if (progress < 30) {
+                        loadingText.textContent = 'Initializing secure connection...';
+                    } else if (progress < 60) {
+                        loadingText.textContent = 'Preparing your dashboard...';
+                    } else if (progress < 90) {
+                        loadingText.textContent = 'Setting up your account...';
+                    } else {
+                        loadingText.textContent = 'Almost ready...';
+                    }
+                }
+                
+                if (progress === 100) {
+                    clearInterval(preloaderInterval);
+                    setTimeout(() => {
+                        preloader.classList.add('fade-out');
+                        document.getElementById('main-content').classList.remove('hidden');
+                        setTimeout(() => {
+                            preloader.style.display = 'none';
+                        }, 500);
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        // Check password strength
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthIndicator = document.getElementById('passwordStrength');
+            
+            if (!strengthIndicator) return;
+            
+            if (password.length === 0) {
+                strengthIndicator.textContent = '';
+                return;
+            }
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]+/)) strength++;
+            if (password.match(/[A-Z]+/)) strength++;
+            if (password.match(/[0-9]+/)) strength++;
+            if (password.match(/[$@#&!]+/)) strength++;
+            
+            const texts = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+            const colors = ['#ff4444', '#ff7744', '#ffaa44', '#44ff88', '#44ff44'];
+            
+            strengthIndicator.textContent = texts[strength];
+            strengthIndicator.style.color = colors[strength];
+        }
+
+        // Handle signup
+        async function handleSignup(event) {
+            event.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+            const signupBtn = document.getElementById('signupBtn');
+            const btnText = signupBtn.querySelector('.btn-text');
+            const btnLoader = signupBtn.querySelector('.btn-loader');
+            
+            // Validate inputs
+            if (!fullName || !email || !password || !confirmPassword) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match!', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            if (!terms) {
+                showNotification('Please accept the Terms of Service', 'error');
+                return;
+            }
+            
+            // Show loading state
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline-block';
+            signupBtn.disabled = true;
+            
+            try {
+                // Create user in Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update profile with display name
+                await user.updateProfile({
+                    displayName: fullName
+                });
+                
+                // Create user document in Firestore
+                await db.collection('users').doc(user.uid).set({
+                    fullName: fullName,
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAtFormatted: new Date().toISOString(),
+                    currency: 'MWK',
+                    monthlyBudget: 0,
+                    settings: {
+                        darkMode: false,
+                        notifications: true,
+                        language: 'en',
+                        dateFormat: 'DD/MM/YYYY'
+                    }
+                });
+                
+                // Create default categories
+                await createDefaultCategories(user.uid);
+                
+                showNotification('Account created successfully! Redirecting...', 'success');
+                
+                // Redirect to dashboard after short delay
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Signup error:', error);
+                
+                let errorMessage = 'Failed to create account. ';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'Email already in use. Please use a different email or login.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Password is too weak. Use at least 6 characters.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email address.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Network error. Please check your internet connection.';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
+                
+            } finally {
+                // Reset button state
+                btnText.style.display = 'inline-block';
+                btnLoader.style.display = 'none';
+                signupBtn.disabled = false;
+            }
+        }
+
+        // Create default categories for new user
+        async function createDefaultCategories(userId) {
+            const categories = [
+                { name: 'Food & Dining', type: 'expense', color: '#FF6B6B', icon: 'utensils' },
+                { name: 'Transportation', type: 'expense', color: '#4ECDC4', icon: 'car' },
+                { name: 'Shopping', type: 'expense', color: '#45B7D1', icon: 'shopping-bag' },
+                { name: 'Entertainment', type: 'expense', color: '#96CEB4', icon: 'film' },
+                { name: 'Bills & Utilities', type: 'expense', color: '#FFE194', icon: 'bolt' },
+                { name: 'Healthcare', type: 'expense', color: '#E6B89C', icon: 'heartbeat' },
+                { name: 'Education', type: 'expense', color: '#A2D9CE', icon: 'book' },
+                { name: 'Salary', type: 'income', color: '#81C784', icon: 'money-bill-wave' },
+                { name: 'Freelance', type: 'income', color: '#64B5F6', icon: 'laptop' },
+                { name: 'Investment', type: 'income', color: '#FFB74D', icon: 'chart-line' }
+            ];
+            
+            const batch = db.batch();
+            
+            categories.forEach((category) => {
+                const categoryRef = db.collection('categories').doc();
+                batch.set(categoryRef, {
+                    ...category,
+                    userId: userId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            
+            await batch.commit();
+            console.log('Default categories created');
+        }
+
+        // Handle Google signup
+        async function handleGoogleSignup() {
+            const googleBtn = document.getElementById('googleSignupBtn');
+            const originalText = googleBtn.innerHTML;
+            
+            googleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            googleBtn.disabled = true;
+            
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('profile');
+                provider.addScope('email');
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                
+                // Check if user exists in Firestore
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // Create new user document
+                    await db.collection('users').doc(user.uid).set({
+                        fullName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        createdAtFormatted: new Date().toISOString(),
+                        currency: 'MWK',
+                        monthlyBudget: 0,
+                        settings: {
+                            darkMode: false,
+                            notifications: true,
+                            language: 'en',
+                            dateFormat: 'DD/MM/YYYY'
+                        }
+                    });
+                    
+                    // Create default categories
+                    await createDefaultCategories(user.uid);
+                }
+                
+                showNotification('Google signup successful! Redirecting...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Google signup error:', error);
+                
+                let errorMessage = 'Google signup failed. ';
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMessage = 'Signup cancelled. Please try again.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage = 'Network error. Please check your connection.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
+                
+            } finally {
+                googleBtn.innerHTML = originalText;
+                googleBtn.disabled = false;
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                 type === 'error' ? 'fa-exclamation-circle' : 
+                                 'fa-info-circle'}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>
