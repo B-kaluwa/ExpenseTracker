@@ -2,17 +2,715 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Settings - ExpenseTracker</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* ========================================
+           SETTINGS PAGE STYLES - FULLY RESPONSIVE
+        ======================================== */
+        
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --primary-gradient: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --secondary: #1976D2;
+            --income: #00C853;
+            --expense: #FF3D00;
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --text-muted: #95A5A6;
+            --border-color: #E0E0E0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s ease;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-brand i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            padding: 0.5rem 0;
+            white-space: nowrap;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--expense);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            padding: 0.5rem;
+        }
+
+        .btn-logout:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Settings Container */
+        .settings-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Settings Header */
+        .settings-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .settings-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .settings-header h1 i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .settings-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Settings Grid - Responsive */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        /* Settings Card */
+        .settings-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .settings-card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .settings-card h2 i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group label i {
+            margin-right: 6px;
+            color: var(--primary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            font-family: var(--font-family);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .form-group input:read-only {
+            background: var(--bg-primary);
+            cursor: not-allowed;
+        }
+
+        /* Checkbox Group */
+        .checkbox {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Input Group */
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group-text {
+            padding: 12px 15px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-right: none;
+            border-radius: var(--radius-md) 0 0 var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .input-group input {
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-family: var(--font-family);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            flex: 1;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-outline.danger {
+            border-color: var(--expense);
+            color: var(--expense);
+        }
+
+        .btn-outline.danger:hover {
+            background: var(--expense);
+            color: white;
+        }
+
+        /* Categories List */
+        .categories-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            transition: all var(--transition-fast);
+        }
+
+        .category-item:hover {
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .category-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .category-name i {
+            color: var(--primary);
+            width: 20px;
+        }
+
+        .category-type {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--primary);
+        }
+
+        .category-type.income {
+            background: rgba(0, 200, 83, 0.1);
+            color: var(--income);
+        }
+
+        .category-type.expense {
+            background: rgba(255, 61, 0, 0.1);
+            color: var(--expense);
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-icon:hover {
+            color: var(--expense);
+            background: rgba(255, 61, 0, 0.1);
+        }
+
+        /* Add Category */
+        .add-category {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-category input {
+            flex: 2;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+        }
+
+        .add-category select {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+        }
+
+        .add-category button {
+            padding: 10px 16px;
+            width: auto;
+        }
+
+        /* Data Actions */
+        .data-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: auto;
+            z-index: 3000;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--income);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--expense);
+        }
+
+        .notification.info {
+            border-left: 4px solid var(--secondary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading State */
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner i {
+            font-size: 2rem;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .settings-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+                position: relative;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: var(--shadow-lg);
+                z-index: 999;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 12px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .nav-links a:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-user {
+                display: none;
+            }
+
+            .settings-container {
+                margin: 20px auto;
+                padding: 0 16px;
+            }
+
+            .settings-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .settings-header p {
+                font-size: 0.9rem;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .settings-card {
+                padding: 20px;
+            }
+
+            .settings-card h2 {
+                font-size: 1.2rem;
+                margin-bottom: 16px;
+            }
+
+            .form-group {
+                margin-bottom: 16px;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 10px 12px;
+                font-size: 16px; /* Prevents zoom on mobile */
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .add-category {
+                flex-wrap: wrap;
+            }
+
+            .add-category input,
+            .add-category select {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .add-category button {
+                flex: 0;
+            }
+
+            .data-actions {
+                flex-direction: column;
+            }
+
+            .notification-container {
+                left: 16px;
+                right: 16px;
+            }
+
+            .notification {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .settings-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .settings-card {
+                padding: 16px;
+            }
+
+            .settings-card h2 {
+                font-size: 1.1rem;
+            }
+
+            .form-group label {
+                font-size: 0.85rem;
+            }
+
+            .category-item {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .category-type {
+                font-size: 0.7rem;
+            }
+
+            .add-category {
+                flex-direction: column;
+            }
+
+            .add-category input,
+            .add-category select,
+            .add-category button {
+                width: 100%;
+            }
+
+            .btn-outline {
+                justify-content: center;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .category-item,
+            .btn-icon {
+                min-height: 44px;
+            }
+
+            .btn-icon {
+                padding: 12px;
+            }
+
+            .form-group input,
+            .form-group select {
+                font-size: 16px;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            body.dark-mode {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --text-primary: #ffffff;
+                --text-secondary: #b0b0b0;
+                --text-muted: #808080;
+                --border-color: #404040;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -21,13 +719,19 @@
             <i class="fas fa-wallet"></i>
             <span>ExpenseTracker</span>
         </div>
-        <div class="nav-links">
+        
+        <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="nav-links" id="navLinks">
             <a href="dashboard.html">Dashboard</a>
             <a href="expenses.html">Expenses</a>
             <a href="income.html">Income</a>
             <a href="reports.html">Reports</a>
             <a href="settings.html" class="active">Settings</a>
         </div>
+        
         <div class="nav-user" id="navUser"></div>
     </nav>
 
@@ -44,18 +748,28 @@
                 <h2><i class="fas fa-user"></i> Profile Information</h2>
                 <form id="profileForm" onsubmit="updateProfile(event)">
                     <div class="form-group">
-                        <label for="displayName">Display Name</label>
-                        <input type="text" id="displayName" name="displayName">
+                        <label for="displayName">
+                            <i class="fas fa-user-circle"></i> Display Name
+                        </label>
+                        <input type="text" id="displayName" name="displayName" 
+                               placeholder="Enter your display name">
                     </div>
                     <div class="form-group">
-                        <label for="email">Email Address</label>
+                        <label for="email">
+                            <i class="fas fa-envelope"></i> Email Address
+                        </label>
                         <input type="email" id="email" name="email" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone">
+                        <label for="phone">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </label>
+                        <input type="tel" id="phone" name="phone" 
+                               placeholder="Enter your phone number">
                     </div>
-                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Profile
+                    </button>
                 </form>
             </div>
 
@@ -64,18 +778,20 @@
                 <h2><i class="fas fa-sliders-h"></i> Preferences</h2>
                 <form id="preferencesForm" onsubmit="updatePreferences(event)">
                     <div class="form-group">
-                        <label for="currency">Default Currency</label>
+                        <label for="currency">
+                            <i class="fas fa-money-bill-wave"></i> Default Currency
+                        </label>
                         <select id="currency" name="currency">
-                            <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="GBP">GBP (£)</option>
-                            <option value="JPY">JPY (¥)</option>
-                            <option value="CAD">CAD ($)</option>
-                            <option value="AUD">AUD ($)</option>
+                            <option value="MWK">Malawi Kwacha (MK)</option>
+                            <option value="USD">US Dollar ($)</option>
+                            <option value="EUR">Euro (€)</option>
+                            <option value="GBP">British Pound (£)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="dateFormat">Date Format</label>
+                        <label for="dateFormat">
+                            <i class="fas fa-calendar-alt"></i> Date Format
+                        </label>
                         <select id="dateFormat" name="dateFormat">
                             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -83,7 +799,9 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="weekStart">Week Starts On</label>
+                        <label for="weekStart">
+                            <i class="fas fa-calendar-week"></i> Week Starts On
+                        </label>
                         <select id="weekStart" name="weekStart">
                             <option value="sunday">Sunday</option>
                             <option value="monday">Monday</option>
@@ -92,16 +810,18 @@
                     <div class="form-group checkbox">
                         <label>
                             <input type="checkbox" id="darkMode" name="darkMode">
-                            Enable Dark Mode
+                            <i class="fas fa-moon"></i> Enable Dark Mode
                         </label>
                     </div>
                     <div class="form-group checkbox">
                         <label>
                             <input type="checkbox" id="notifications" name="notifications">
-                            Enable Notifications
+                            <i class="fas fa-bell"></i> Enable Notifications
                         </label>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Preferences</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Preferences
+                    </button>
                 </form>
             </div>
 
@@ -110,19 +830,24 @@
                 <h2><i class="fas fa-chart-line"></i> Monthly Budget</h2>
                 <form id="budgetForm" onsubmit="updateBudget(event)">
                     <div class="form-group">
-                        <label for="monthlyBudget">Monthly Budget Limit</label>
+                        <label for="monthlyBudget">
+                            <i class="fas fa-chart-line"></i> Monthly Budget Limit
+                        </label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" id="monthlyBudget" name="monthlyBudget" step="0.01" min="0">
+                            <span class="input-group-text">MK</span>
+                            <input type="number" id="monthlyBudget" name="monthlyBudget" 
+                                   step="100" min="0" placeholder="Enter budget amount">
                         </div>
                     </div>
                     <div class="form-group checkbox">
                         <label>
                             <input type="checkbox" id="budgetAlerts" name="budgetAlerts">
-                            Alert me when I reach 80% of budget
+                            <i class="fas fa-bell"></i> Alert me when I reach 80% of budget
                         </label>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Budget</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Budget
+                    </button>
                 </form>
             </div>
 
@@ -130,7 +855,9 @@
             <div class="settings-card">
                 <h2><i class="fas fa-tags"></i> Custom Categories</h2>
                 <div class="categories-list" id="categoriesList">
-                    <!-- Categories will be loaded here -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
                 </div>
                 <div class="add-category">
                     <input type="text" id="newCategory" placeholder="New category name">
@@ -139,7 +866,7 @@
                         <option value="income">Income</option>
                     </select>
                     <button class="btn btn-primary" onclick="addCategory()">
-                        <i class="fas fa-plus"></i>
+                        <i class="fas fa-plus"></i> Add
                     </button>
                 </div>
             </div>
@@ -149,18 +876,29 @@
                 <h2><i class="fas fa-shield-alt"></i> Security</h2>
                 <form id="securityForm" onsubmit="changePassword(event)">
                     <div class="form-group">
-                        <label for="currentPassword">Current Password</label>
-                        <input type="password" id="currentPassword" name="currentPassword">
+                        <label for="currentPassword">
+                            <i class="fas fa-lock"></i> Current Password
+                        </label>
+                        <input type="password" id="currentPassword" name="currentPassword" 
+                               placeholder="Enter current password">
                     </div>
                     <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" name="newPassword">
+                        <label for="newPassword">
+                            <i class="fas fa-key"></i> New Password
+                        </label>
+                        <input type="password" id="newPassword" name="newPassword" 
+                               placeholder="Enter new password">
                     </div>
                     <div class="form-group">
-                        <label for="confirmPassword">Confirm New Password</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword">
+                        <label for="confirmPassword">
+                            <i class="fas fa-check-circle"></i> Confirm New Password
+                        </label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" 
+                               placeholder="Confirm new password">
                     </div>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
                 </form>
             </div>
 
@@ -182,7 +920,483 @@
         </div>
     </div>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/settings.js"></script>
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+            authDomain: "expense-tracker-aebb1.firebaseapp.com",
+            projectId: "expense-tracker-aebb1",
+            storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+            messagingSenderId: "220896439984",
+            appId: "1:220896439984:web:645c8656c3ba1d39991575"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Global variables
+        let currentUser = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navLinks = document.getElementById('navLinks');
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            
+            if (navLinks && mobileBtn && !navLinks.contains(event.target) && !mobileBtn.contains(event.target)) {
+                navLinks.classList.remove('active');
+            }
+        });
+
+        // Check authentication
+        function checkAuth() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    updateUserInfo(user);
+                    loadUserSettings();
+                    loadCategories();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Update user info in navbar
+        function updateUserInfo(user) {
+            const navUser = document.getElementById('navUser');
+            if (navUser && user) {
+                navUser.innerHTML = `
+                    <div class="user-dropdown">
+                        <span>${user.displayName || user.email}</span>
+                        <button onclick="logout()" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await auth.signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Failed to logout', 'error');
+            }
+        }
+
+        // Load user settings
+        async function loadUserSettings() {
+            try {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                
+                if (doc.exists) {
+                    const settings = doc.data();
+                    populateSettings(settings);
+                } else {
+                    // Create default settings with MK currency
+                    const defaultSettings = {
+                        fullName: currentUser.displayName || '',
+                        email: currentUser.email,
+                        phone: '',
+                        currency: 'MWK',
+                        dateFormat: 'DD/MM/YYYY',
+                        weekStart: 'monday',
+                        darkMode: false,
+                        notifications: true,
+                        monthlyBudget: 0,
+                        budgetAlerts: true
+                    };
+                    
+                    await db.collection('users').doc(currentUser.uid).set(defaultSettings);
+                    populateSettings(defaultSettings);
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showNotification('Failed to load settings', 'error');
+            }
+        }
+
+        // Populate settings form
+        function populateSettings(settings) {
+            // Profile
+            document.getElementById('displayName').value = settings.fullName || '';
+            document.getElementById('email').value = settings.email || '';
+            document.getElementById('phone').value = settings.phone || '';
+            
+            // Preferences
+            document.getElementById('currency').value = settings.currency || 'MWK';
+            document.getElementById('dateFormat').value = settings.dateFormat || 'DD/MM/YYYY';
+            document.getElementById('weekStart').value = settings.weekStart || 'monday';
+            document.getElementById('darkMode').checked = settings.darkMode || false;
+            document.getElementById('notifications').checked = settings.notifications !== false;
+            
+            // Budget
+            document.getElementById('monthlyBudget').value = settings.monthlyBudget || 0;
+            document.getElementById('budgetAlerts').checked = settings.budgetAlerts !== false;
+        }
+
+        // Update profile
+        async function updateProfile(event) {
+            event.preventDefault();
+            
+            const displayName = document.getElementById('displayName').value;
+            const phone = document.getElementById('phone').value;
+            
+            try {
+                if (currentUser.displayName !== displayName) {
+                    await currentUser.updateProfile({
+                        displayName: displayName
+                    });
+                }
+                
+                await db.collection('users').doc(currentUser.uid).update({
+                    fullName: displayName,
+                    phone: phone
+                });
+                
+                showNotification('Profile updated successfully', 'success');
+                updateUserInfo(currentUser);
+                
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showNotification('Failed to update profile', 'error');
+            }
+        }
+
+        // Update preferences
+        async function updatePreferences(event) {
+            event.preventDefault();
+            
+            const preferences = {
+                currency: document.getElementById('currency').value,
+                dateFormat: document.getElementById('dateFormat').value,
+                weekStart: document.getElementById('weekStart').value,
+                darkMode: document.getElementById('darkMode').checked,
+                notifications: document.getElementById('notifications').checked
+            };
+            
+            try {
+                await db.collection('users').doc(currentUser.uid).update(preferences);
+                
+                if (preferences.darkMode) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+                
+                showNotification('Preferences updated successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error updating preferences:', error);
+                showNotification('Failed to update preferences', 'error');
+            }
+        }
+
+        // Update budget
+        async function updateBudget(event) {
+            event.preventDefault();
+            
+            const budget = {
+                monthlyBudget: parseFloat(document.getElementById('monthlyBudget').value) || 0,
+                budgetAlerts: document.getElementById('budgetAlerts').checked
+            };
+            
+            try {
+                await db.collection('users').doc(currentUser.uid).update(budget);
+                showNotification('Budget updated successfully', 'success');
+            } catch (error) {
+                console.error('Error updating budget:', error);
+                showNotification('Failed to update budget', 'error');
+            }
+        }
+
+        // Change password
+        async function changePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showNotification('Please fill in all password fields', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showNotification('New passwords do not match', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            try {
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    currentUser.email,
+                    currentPassword
+                );
+                
+                await currentUser.reauthenticateWithCredential(credential);
+                await currentUser.updatePassword(newPassword);
+                
+                showNotification('Password changed successfully', 'success');
+                
+                // Clear password fields
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+            } catch (error) {
+                console.error('Error changing password:', error);
+                
+                if (error.code === 'auth/wrong-password') {
+                    showNotification('Current password is incorrect', 'error');
+                } else {
+                    showNotification('Failed to change password', 'error');
+                }
+            }
+        }
+
+        // Load categories
+        async function loadCategories() {
+            const categoriesList = document.getElementById('categoriesList');
+            if (!categoriesList) return;
+            
+            try {
+                const snapshot = await db.collection('categories')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('type')
+                    .orderBy('name')
+                    .get();
+                
+                if (snapshot.empty) {
+                    categoriesList.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No custom categories yet</p>';
+                    return;
+                }
+                
+                categoriesList.innerHTML = snapshot.docs.map(doc => {
+                    const category = doc.data();
+                    return `
+                        <div class="category-item">
+                            <span class="category-name">
+                                <i class="fas fa-tag"></i>
+                                ${escapeHtml(category.name)}
+                            </span>
+                            <span class="category-type ${category.type}">${category.type}</span>
+                            <button class="btn-icon" onclick="deleteCategory('${doc.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                categoriesList.innerHTML = '<p style="text-align: center; color: var(--expense);">Failed to load categories</p>';
+            }
+        }
+
+        // Add category
+        async function addCategory() {
+            const name = document.getElementById('newCategory').value.trim();
+            const type = document.getElementById('newCategoryType').value;
+            
+            if (!name) {
+                showNotification('Please enter a category name', 'error');
+                return;
+            }
+            
+            try {
+                await db.collection('categories').add({
+                    userId: currentUser.uid,
+                    name: name,
+                    type: type,
+                    icon: 'tag',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('newCategory').value = '';
+                await loadCategories();
+                showNotification('Category added successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error adding category:', error);
+                showNotification('Failed to add category', 'error');
+            }
+        }
+
+        // Delete category
+        async function deleteCategory(categoryId) {
+            if (!confirm('Are you sure you want to delete this category?')) {
+                return;
+            }
+            
+            try {
+                await db.collection('categories').doc(categoryId).delete();
+                await loadCategories();
+                showNotification('Category deleted successfully', 'success');
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                showNotification('Failed to delete category', 'error');
+            }
+        }
+
+        // Export data
+        async function exportData() {
+            try {
+                const [expenses, income] = await Promise.all([
+                    db.collection('expenses').where('userId', '==', currentUser.uid).get(),
+                    db.collection('income').where('userId', '==', currentUser.uid).get()
+                ]);
+                
+                const data = {
+                    expenses: expenses.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    income: income.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    exportDate: new Date().toISOString()
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `expense-tracker-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                
+                showNotification('Data exported successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showNotification('Failed to export data', 'error');
+            }
+        }
+
+        // Import data
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        showNotification('Import feature coming soon', 'info');
+                    } catch (error) {
+                        console.error('Error importing data:', error);
+                        showNotification('Failed to import data', 'error');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        // Delete all data
+        async function deleteData() {
+            if (!confirm('WARNING: This will delete ALL your data. This action cannot be undone. Continue?')) {
+                return;
+            }
+            
+            const confirmText = prompt('Type "DELETE ALL" to confirm:');
+            if (confirmText !== 'DELETE ALL') {
+                showNotification('Deletion cancelled', 'info');
+                return;
+            }
+            
+            try {
+                // Delete all expenses
+                const expenses = await db.collection('expenses').where('userId', '==', currentUser.uid).get();
+                const batch = db.batch();
+                expenses.docs.forEach(doc => batch.delete(doc.ref));
+                
+                // Delete all income
+                const income = await db.collection('income').where('userId', '==', currentUser.uid).get();
+                income.docs.forEach(doc => batch.delete(doc.ref));
+                
+                // Delete all categories
+                const categories = await db.collection('categories').where('userId', '==', currentUser.uid).get();
+                categories.docs.forEach(doc => batch.delete(doc.ref));
+                
+                await batch.commit();
+                
+                showNotification('All data deleted successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error deleting data:', error);
+                showNotification('Failed to delete data', 'error');
+            }
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                 type === 'error' ? 'fa-exclamation-circle' : 
+                                 'fa-info-circle'}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Make functions globally available
+        window.toggleMobileMenu = toggleMobileMenu;
+        window.updateProfile = updateProfile;
+        window.updatePreferences = updatePreferences;
+        window.updateBudget = updateBudget;
+        window.changePassword = changePassword;
+        window.addCategory = addCategory;
+        window.deleteCategory = deleteCategory;
+        window.exportData = exportData;
+        window.importData = importData;
+        window.deleteData = deleteData;
+        window.logout = logout;
+    </script>
 </body>
 </html>
