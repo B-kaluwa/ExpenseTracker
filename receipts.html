@@ -1155,4 +1155,109 @@
             }
             
             try {
-                const expenseRef = db.collection('exp
+                const expenseRef = db.collection('expenses').doc(expenseId);
+                const expense = await expenseRef.get();
+                
+                if (!expense.exists) return;
+                
+                const expenseData = expense.data();
+                
+                // Delete from storage
+                if (type === 'receipt' && expenseData.receiptUrl) {
+                    try {
+                        const receiptRef = storage.refFromURL(expenseData.receiptUrl);
+                        await receiptRef.delete();
+                    } catch (e) {
+                        console.log('Receipt not found in storage');
+                    }
+                    await expenseRef.update({
+                        receiptUrl: firebase.firestore.FieldValue.delete()
+                    });
+                } else if (type === 'item' && expenseData.itemImageUrl) {
+                    try {
+                        const itemRef = storage.refFromURL(expenseData.itemImageUrl);
+                        await itemRef.delete();
+                    } catch (e) {
+                        console.log('Item image not found in storage');
+                    }
+                    await expenseRef.update({
+                        itemImageUrl: firebase.firestore.FieldValue.delete()
+                    });
+                }
+                
+                // Reload receipts
+                await loadReceipts();
+                showNotification(`${type === 'receipt' ? 'Receipt' : 'Item image'} deleted successfully`, 'success');
+                
+            } catch (error) {
+                console.error('Error deleting receipt:', error);
+                showNotification('Failed to delete receipt', 'error');
+            }
+        }
+
+        // View expense details
+        function viewExpense(expenseId) {
+            window.location.href = `expenses.html?view=${expenseId}`;
+        }
+
+        // Format date
+        function formatDate(timestamp, format = 'short') {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            
+            if (format === 'full') {
+                return date.toLocaleDateString('en-MW', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            }
+            
+            return date.toLocaleDateString('en-MW', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                 type === 'error' ? 'fa-exclamation-circle' : 
+                                 'fa-info-circle'}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Make functions globally available
+        window.toggleMobileMenu = toggleMobileMenu;
+        window.filterReceipts = filterReceipts;
+        window.sortReceipts = sortReceipts;
+        window.openLightbox = openLightbox;
+        window.closeLightbox = closeLightbox;
+        window.navigateLightbox = navigateLightbox;
+        window.deleteReceipt = deleteReceipt;
+        window.viewExpense = viewExpense;
+        window.logout = logout;
+    </script>
+</body>
+</html>
