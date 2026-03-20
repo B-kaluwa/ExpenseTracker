@@ -2,121 +2,1056 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExpenseTracker | Prince Kaluwa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>About & Contact - ExpenseTracker</title>
     
-    <!-- Favicon / Icon -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
     
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ========================================
+           ABOUT & CONTACT PAGE - FULLY RESPONSIVE
+        ======================================== */
+        
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --primary-gradient: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --secondary: #1976D2;
+            --income: #00C853;
+            --expense: #FF3D00;
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --text-muted: #95A5A6;
+            --border-color: #E0E0E0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s ease;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-brand i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--expense);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            padding: 0.5rem;
+        }
+
+        .btn-logout:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Main Container */
+        .about-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-xl);
+            padding: 60px 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .hero-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .hero-section p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        /* Cards */
+        .info-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 30px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-base);
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .card-header i {
+            font-size: 2rem;
+            color: var(--primary);
+            background: rgba(46, 125, 50, 0.1);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-lg);
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Developer Profile */
+        .developer-profile {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .developer-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .developer-avatar i {
+            font-size: 4rem;
+            color: white;
+        }
+
+        .developer-info h3 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .developer-title {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .developer-bio {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-top: 15px;
+        }
+
+        .company-name {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Contact Details */
+        .contact-details {
+            margin-top: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+            transition: all var(--transition-fast);
+        }
+
+        .contact-item:hover {
+            transform: translateX(5px);
+        }
+
+        .contact-item i {
+            width: 40px;
+            height: 40px;
+            background: rgba(46, 125, 50, 0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .contact-info h4 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+
+        .contact-info p {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .contact-info a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .contact-info a:hover {
+            color: var(--primary);
+        }
+
+        /* Business Hours */
+        .hours-list {
+            margin-top: 20px;
+        }
+
+        .hour-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hour-day {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .hour-time {
+            color: var(--text-secondary);
+        }
+
+        /* Contact Form */
+        .contact-form {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-family: var(--font-family);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        /* Map Section */
+        .map-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .map-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .map-section h2 i {
+            color: var(--primary);
+        }
+
+        .map-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-lg);
+            padding: 60px;
+            text-align: center;
+            color: white;
+        }
+
+        .map-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            padding: 40px 5% 20px;
+            margin-top: 40px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h4 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            transition: all var(--transition-fast);
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+        }
+
+        .notification {
+            background: white;
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+            font-size: 0.85rem;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--income);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--expense);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .hero-section {
+                padding: 40px 20px;
+            }
+            
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem;
+                position: relative;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: var(--shadow-lg);
+                z-index: 999;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 12px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .nav-links a:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-user {
+                display: none;
+            }
+
+            .about-container {
+                margin: 20px auto;
+                padding: 0 16px;
+            }
+
+            .hero-section {
+                padding: 30px 20px;
+            }
+
+            .hero-section h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero-section p {
+                font-size: 1rem;
+            }
+
+            .info-card {
+                padding: 20px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .developer-profile {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .developer-info h3 {
+                font-size: 1.5rem;
+            }
+
+            .contact-item {
+                padding: 12px 0;
+            }
+
+            .hour-item {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .map-placeholder {
+                padding: 40px 20px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .social-links {
+                justify-content: center;
+            }
+
+            .notification-container {
+                left: 16px;
+                right: 16px;
+            }
+
+            .notification {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-section h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card-header h2 {
+                font-size: 1.3rem;
+            }
+            
+            .developer-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .developer-avatar i {
+                font-size: 3rem;
+            }
+            
+            .developer-info h3 {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .contact-item,
+            .social-links a {
+                min-height: 44px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Preloader -->
-    <div class="preloader" id="preloader">
-        <div class="preloader-content">
-            <div class="cash-flow-preloader">
-                <div class="coin-stack">
-                    <div class="coin coin-1"><i class="fas fa-coins"></i></div>
-                    <div class="coin coin-2"><i class="fas fa-coins"></i></div>
-                    <div class="coin coin-3"><i class="fas fa-coins"></i></div>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-wallet"></i>
+            <span>ExpenseTracker</span>
+        </div>
+        
+        <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="nav-links" id="navLinks">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="expenses.html">Expenses</a>
+            <a href="income.html">Income</a>
+            <a href="reports.html">Reports</a>
+            <a href="receipts.html">Receipts</a>
+            <a href="settings.html">Settings</a>
+            <a href="about.html" class="active">About & Contact</a>
+        </div>
+        
+        <div class="nav-user" id="navUser"></div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="about-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1>About & Contact</h1>
+            <p>Learn more about ExpenseTracker and get in touch with our development team</p>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- About Section -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h2>About ExpenseTracker</h2>
                 </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="preloader-progress"></div>
+                
+                <div class="developer-profile">
+                    <div class="developer-avatar">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div class="developer-info">
+                        <h3>Prince B. Kaluwa</h3>
+                        <div class="developer-title">Full Stack Developer</div>
+                        <div class="company-name">PBK Freelancing</div>
+                    </div>
                 </div>
-                <div class="preloader-text">
-                    <h3>ExpenseTracker</h3>
-                    <p class="loading-text">Loading your finances...</p>
-                    <p class="percentage-text" id="percentage">0%</p>
+                
+                <div class="developer-bio">
+                    <p>ExpenseTracker is a powerful, user-friendly financial management application designed to help individuals and businesses track their expenses, manage income, and gain valuable insights into their spending habits.</p>
+                    <br>
+                    <p>Developed by <strong>Prince B. Kaluwa</strong> under <strong>PBK Freelancing</strong>, this application combines modern web technologies with intuitive design to provide a seamless experience for managing personal finances. With features like receipt scanning, detailed analytics, and secure cloud storage, ExpenseTracker makes financial management accessible to everyone.</p>
+                    <br>
+                    <p>Our mission is to empower users with the tools they need to make informed financial decisions and achieve their financial goals. Whether you're tracking daily expenses, managing a budget, or analyzing spending patterns, ExpenseTracker has you covered.</p>
                 </div>
-                <div class="cash-flow-animation">
-                    <span class="cash-flow-up"><i class="fas fa-arrow-up"></i> Income</span>
-                    <span class="cash-flow-down"><i class="fas fa-arrow-down"></i> Expenses</span>
+            </div>
+
+            <!-- Contact Section -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-envelope"></i>
+                    <h2>Contact Information</h2>
                 </div>
+                
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <i class="fas fa-user-circle"></i>
+                        <div class="contact-info">
+                            <h4>Developer</h4>
+                            <p>Prince B. Kaluwa</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-building"></i>
+                        <div class="contact-info">
+                            <h4>Organization</h4>
+                            <p>PBK Freelancing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <div class="contact-info">
+                            <h4>Phone</h4>
+                            <p><a href="tel:+265999561582">+265 999 561 582</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div class="contact-info">
+                            <h4>Email</h4>
+                            <p><a href="mailto:pbkfreelancing@gmail.com">pbkfreelancing@gmail.com</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="contact-info">
+                            <h4>WhatsApp</h4>
+                            <p><a href="https://wa.me/265999561582">+265 999 561 582</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Hours & Support -->
+        <div class="content-grid">
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-clock"></i>
+                    <h2>Business Hours</h2>
+                </div>
+                
+                <div class="hours-list">
+                    <div class="hour-item">
+                        <span class="hour-day">Monday - Friday</span>
+                        <span class="hour-time">8:00 AM - 6:00 PM</span>
+                    </div>
+                    <div class="hour-item">
+                        <span class="hour-day">Saturday</span>
+                        <span class="hour-time">9:00 AM - 4:00 PM</span>
+                    </div>
+                    <div class="hour-item">
+                        <span class="hour-day">Sunday</span>
+                        <span class="hour-time">Closed (Emergency support available)</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <h4 style="margin-bottom: 10px; color: var(--primary);">Support Response Time:</h4>
+                    <p style="color: var(--text-secondary);">We typically respond within 24 hours on business days. For urgent matters, please call or WhatsApp.</p>
+                </div>
+            </div>
+
+            <!-- Quick Contact Form -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-paper-plane"></i>
+                    <h2>Send a Message</h2>
+                </div>
+                
+                <form class="contact-form" id="contactForm" onsubmit="sendMessage(event)">
+                    <div class="form-group">
+                        <input type="text" id="name" placeholder="Your Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="email" placeholder="Your Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="subject" placeholder="Subject" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="message" placeholder="Your Message" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="map-section">
+            <h2><i class="fas fa-map-marker-alt"></i> Our Location</h2>
+            <div class="map-placeholder">
+                <i class="fas fa-map-marked-alt"></i>
+                <h3>Malawi</h3>
+                <p>Available nationwide for remote support and consultations</p>
+                <p style="margin-top: 10px; font-size: 0.9rem;">📞 +265 999 561 582 | ✉️ pbkfreelancing@gmail.com</p>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="landing-container hidden" id="main-content">
-        <nav class="navbar">
-            <div class="nav-brand">
-                <i class="fas fa-wallet"></i>
-                <span>ExpenseTracker</span>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>ExpenseTracker</h4>
+                <p>Smart expense tracking for everyone.</p>
+                <p>Developed with ❤️ by Prince B. Kaluwa</p>
+                <p>PBK Freelancing</p>
             </div>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#about">About</a>
-                <a href="#contact">Contact</a>
+            
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <p><a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none;">Dashboard</a></p>
+                <p><a href="expenses.html" style="color: var(--text-secondary); text-decoration: none;">Expenses</a></p>
+                <p><a href="income.html" style="color: var(--text-secondary); text-decoration: none;">Income</a></p>
+                <p><a href="reports.html" style="color: var(--text-secondary); text-decoration: none;">Reports</a></p>
             </div>
-            <div class="nav-buttons">
-                <button class="btn btn-outline" onclick="window.location.href='login.html'">Login</button>
-                <button class="btn btn-primary" onclick="window.location.href='signup.html'">Sign Up</button>
+            
+            <div class="footer-section">
+                <h4>Contact Info</h4>
+                <p><i class="fas fa-phone"></i> +265 999 561 582</p>
+                <p><i class="fas fa-envelope"></i> pbkfreelancing@gmail.com</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                </div>
             </div>
-        </nav>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 ExpenseTracker. Developed by Prince B. Kaluwa | PBK Freelancing. All rights reserved.</p>
+        </div>
+    </footer>
 
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Track Your <span class="highlight">Expenses</span> Like a Pro</h1>
-                <p>Smart expense tracking with receipt management and insightful analytics</p>
-                <div class="hero-buttons">
-                    <button class="btn btn-primary btn-large" onclick="window.location.href='signup.html'">
-                        <i class="fas fa-rocket"></i> Get Started Free
-                    </button>
-                    <button class="btn btn-outline btn-large" onclick="window.location.href='#demo'">
-                        <i class="fas fa-play"></i> Watch Demo
-                    </button>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <span class="stat-number">10K+</span>
-                        <span class="stat-label">Active Users</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number">50K+</span>
-                        <span class="stat-label">Receipts Scanned</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number">4.8★</span>
-                        <span class="stat-label">User Rating</span>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-image">
-                <img src="assets/images/dashboard-preview.svg" alt="Dashboard Preview">
-            </div>
-        </section>
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
 
-        <section id="features" class="features">
-            <h2>Why Choose ExpenseTracker?</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <i class="fas fa-camera"></i>
-                    <h3>Receipt Scanning</h3>
-                    <p>Upload receipt images and extract data automatically</p>
-                </div>
-                <div class="feature-card">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>Insightful Analytics</h3>
-                    <p>Visualize your spending with interactive charts</p>
-                </div>
-                <div class="feature-card">
-                    <i class="fas fa-shield-alt"></i>
-                    <h3>Secure & Private</h3>
-                    <p>Your financial data is encrypted and protected</p>
-                </div>
-            </div>
-        </section>
-    </div>
+    <script>
+        // Firebase Configuration (if needed for user info)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKWJ7ev6WjwuY7L6BtEgUb00VDdA5DBBI",
+            authDomain: "expense-tracker-aebb1.firebaseapp.com",
+            projectId: "expense-tracker-aebb1",
+            storageBucket: "expense-tracker-aebb1.firebasestorage.app",
+            messagingSenderId: "220896439984",
+            appId: "1:220896439984:web:645c8656c3ba1d39991575"
+        };
 
-    <script src="js/preloader.js"></script>
+        // Initialize Firebase if not already
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // Check authentication for user info
+        function checkAuth() {
+            if (typeof firebase !== 'undefined') {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        updateUserInfo(user);
+                    }
+                });
+            }
+        }
+
+        // Update user info in navbar
+        function updateUserInfo(user) {
+            const navUser = document.getElementById('navUser');
+            if (navUser && user) {
+                navUser.innerHTML = `
+                    <div class="user-dropdown">
+                        <span>${user.displayName || user.email}</span>
+                        <button onclick="logout()" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (typeof firebase !== 'undefined') {
+                try {
+                    await firebase.auth().signOut();
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            }
+        }
+
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navLinks = document.getElementById('navLinks');
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            
+            if (navLinks && mobileBtn && !navLinks.contains(event.target) && !mobileBtn.contains(event.target)) {
+                navLinks.classList.remove('active');
+            }
+        });
+
+        // Send message
+        function sendMessage(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+            
+            // Here you would typically send to a backend service
+            // For now, we'll simulate sending and open email client
+            
+            const mailtoLink = `mailto:pbkfreelancing@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
+            
+            showNotification('Opening email client...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = mailtoLink;
+            }, 1000);
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                 type === 'error' ? 'fa-exclamation-circle' : 
+                                 'fa-info-circle'}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+
+        // Make functions globally available
+        window.toggleMobileMenu = toggleMobileMenu;
+        window.sendMessage = sendMessage;
+        window.logout = logout;
+    </script>
 </body>
 </html>
